@@ -67,9 +67,9 @@ body {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  background: var(--mistika-ink);
-  color: var(--mistika-cream);
-  border: 1px solid var(--mistika-border);
+  background: #000;
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   position: relative;
   cursor: pointer;
   display: inline-grid;
@@ -78,7 +78,7 @@ body {
   -webkit-user-select: none;
   touch-action: manipulation;
   border-radius: 9999px;
-  box-shadow: 0 10px 25px rgba(15, 10, 6, 0.22);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
   transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
@@ -119,8 +119,8 @@ body {
 
 .button-86:focus-visible {
   box-shadow:
-    0 0 0 3px rgba(194, 116, 63, 0.35),
-    0 10px 25px rgba(15, 10, 6, 0.22);
+    0 0 0 3px rgba(0, 0, 0, 0.2),
+    0 10px 25px rgba(0, 0, 0, 0.18);
 }
 
 .button-86:active {

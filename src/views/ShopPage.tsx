@@ -79,33 +79,32 @@ export function ShopPage() {
                 ? `${stock} ${stock === 1 ? "disponible" : "disponibles"}`
                 : "Agotado";
             const stockTone = isInactive
-              ? "border-[var(--mistika-border)] bg-[var(--mistika-cream)] text-[var(--mistika-olive)]"
+              ? "border-black/10 bg-white text-black/40"
               : isAvailable
-                ? "border-emerald-200/70 bg-emerald-50/80 text-emerald-700"
-                : "border-amber-200/70 bg-amber-50/80 text-amber-800";
+                ? "border-black/20 bg-black/5 text-black/70"
+                : "border-black/10 bg-black/5 text-black/50";
             const stockDot = isInactive
-              ? "bg-neutral-400"
+              ? "bg-black/30"
               : isAvailable
-                ? "bg-emerald-500"
-                : "bg-amber-500";
+                ? "bg-black"
+                : "bg-black/40";
             const priceLabel = p.price?.toString() ?? "—";
 
             return (
               <Link
                 key={p.id}
                 href={`/shop/${p.id}`}
-                className="group relative overflow-hidden rounded-[30px] border bg-[var(--mistika-paper)] p-4 text-[var(--mistika-ink)] shadow-[var(--mistika-shadow)] card-reveal"
+                className="group relative overflow-hidden rounded-[30px] border border-black/10 bg-white p-4 text-black shadow-[0_16px_36px_rgba(0,0,0,0.08)] card-reveal"
                 style={{
-                  borderColor: "var(--mistika-border)",
                   animationDelay: `${index * 70}ms`,
                 }}
               >
-                <div className="pointer-events-none absolute -left-14 top-6 h-28 w-28 rounded-full bg-[var(--mistika-copper)]/25 blur-2xl transition-transform duration-700 group-hover:translate-y-2" />
-                <div className="pointer-events-none absolute -right-10 bottom-8 h-24 w-24 rounded-full bg-[var(--mistika-olive)]/20 blur-2xl transition-transform duration-700 group-hover:-translate-y-2" />
+                <div className="pointer-events-none absolute -left-14 top-6 h-28 w-28 rounded-full bg-black/5 blur-2xl transition-transform duration-700 group-hover:translate-y-2" />
+                <div className="pointer-events-none absolute -right-10 bottom-8 h-24 w-24 rounded-full bg-black/5 blur-2xl transition-transform duration-700 group-hover:-translate-y-2" />
 
                 <div className="relative flex flex-col gap-4">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="max-w-[150px] truncate rounded-full border border-[var(--mistika-border)] bg-[var(--mistika-cream)]/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--mistika-ink)] backdrop-blur-sm">
+                    <span className="max-w-[150px] truncate rounded-full border border-black/10 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-black/80 backdrop-blur-sm">
                       {p.category}
                     </span>
                     <div className="flex items-center gap-2">
@@ -124,7 +123,7 @@ export function ShopPage() {
                     </div>
                   </div>
 
-                  <div className="relative overflow-hidden rounded-[24px] border border-[var(--mistika-border)] bg-[var(--mistika-cream)]">
+                  <div className="relative overflow-hidden rounded-[24px] border border-black/10 bg-black/5">
                     <div
                       className="pointer-events-none absolute inset-0 opacity-90"
                       style={{
@@ -144,11 +143,11 @@ export function ShopPage() {
                       />
 
                       <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
-                        <div className="rounded-full bg-[var(--mistika-paper)]/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-[var(--mistika-olive)]">
+                        <div className="rounded-full border border-black/10 bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-black/60">
                           MXN
                         </div>
-                        <div className="rounded-full bg-[var(--mistika-ink)] px-3 py-1 text-sm font-semibold text-[var(--mistika-cream)]">
-                          {priceLabel}
+                        <div className="rounded-full bg-black px-3 py-1 text-sm font-semibold text-white">
+                          $ {priceLabel}
                         </div>
                       </div>
                     </div>
@@ -160,19 +159,19 @@ export function ShopPage() {
                         {p.name}
                       </h2>
                       {p.description ? (
-                        <p className="mt-1 text-sm text-[var(--mistika-olive)] line-clamp-2">
+                        <p className="mt-1 text-sm text-black/60 line-clamp-2">
                           {p.description}
                         </p>
                       ) : (
-                        <p className="mt-1 text-sm text-[var(--mistika-olive)]">
+                        <p className="mt-1 text-sm text-black/60">
                           Sin descripción por el momento.
                         </p>
                       )}
                     </div>
 
-                    <div className="text-right text-[10px] uppercase tracking-[0.35em] text-[var(--mistika-olive)]">
+                    <div className="text-right text-[10px] uppercase tracking-[0.35em] text-black/50">
                       Aroma
-                      <span className="mt-1 block text-xs font-semibold tracking-[0.1em] text-[var(--mistika-ink)]">
+                      <span className="mt-1 block text-xs font-semibold tracking-[0.1em] text-black">
                         Mistika
                       </span>
                     </div>
