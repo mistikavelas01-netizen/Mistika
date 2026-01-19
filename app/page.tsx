@@ -52,6 +52,11 @@ export default function HomePage() {
     margin: "0px 0px -120px 0px",
   });
 
+  // Debug logging
+  if (typeof window !== "undefined") {
+    console.log("Products data:", { productsData, products, isLoading, isError, error });
+  }
+
   const scrollToProducts = () => {
     productsSectionRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -157,7 +162,7 @@ export default function HomePage() {
             className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4"
             variants={gridVariants}
             initial="hidden"
-            animate={gridInView ? "show" : "hidden"}
+            animate={gridInView ? "show" : "show"}
           >
             {products.map((product: Product) => (
               <motion.div key={product.id} variants={cardVariants}>

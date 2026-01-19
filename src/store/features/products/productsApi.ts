@@ -4,33 +4,36 @@ export const productsApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
     // Fetch all products
     fetchProducts: build.query({
-      query: () => ({
-        url: "products",
-        method: "GET",
-        headers: {
-          endpoint: "products",
-          method: "GET",
-        },
-      }),
-      transformResponse: (response: any) => ({
-        data: response.data || []
-      }),
+      query: () => "/products",
+      transformResponse: (response: any) => {
+        // Handle the response structure from Next.js API route
+        if (response.success && response.data) {
+          return { data: response.data };
+        }
+        if (Array.isArray(response)) {
+          return { data: response };
+        }
+        if (response.data) {
+          return { data: Array.isArray(response.data) ? response.data : [] };
+        }
+        return { data: [] };
+      },
       providesTags: ["Products"],
     }),
 
     // Fetch single product by ID
     fetchProduct: build.query({
-      query: (id: string) => ({
-        url: `products/${id}`,
-        method: "GET",
-        headers: {
-          endpoint: `products/${id}`,
-          method: "GET",
-        },
-      }),
-      transformResponse: (response: any) => ({
-        data: response.data
-      }),
+      query: (id: string) => `/products/${id}`,
+      transformResponse: (response: any) => {
+        // Handle the response structure from Next.js API route
+        if (response.success && response.data) {
+          return { data: response.data };
+        }
+        if (response.data) {
+          return { data: response.data };
+        }
+        return { data: response };
+      },
       providesTags: (result, error, id) => [{ type: "Products", id }],
     }),
 
