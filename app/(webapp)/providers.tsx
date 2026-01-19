@@ -3,11 +3,12 @@
 import type { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 import { StoreProvider } from "./StoreProvider";
+import { CartProvider } from "@/context/cart-context";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <StoreProvider>
-      {children}
+      <CartProvider>{children}</CartProvider>
       <Toaster
         position="top-right"
         toastOptions={{

@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useCart } from "@/context/cart-context";
 
 export function CartPage() {
-  // TODO: Implement cart functionality with RTK Query
-  const cart: CartItem[] = [];
-  const removeFromCart = () => {};
-  const updateQuantity = () => {};
-  const clearCart = () => {};
-  const totalPrice = 0;
-  const totalQuantity = 0;
+  const {
+    cart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    totalPrice,
+    totalQuantity,
+  } = useCart();
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">

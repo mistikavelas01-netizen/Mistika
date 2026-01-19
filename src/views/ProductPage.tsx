@@ -6,28 +6,55 @@ import { useFetchProductQuery } from "@/store/features/products/productsApi";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 
 export function ProductPage() {
-
   const params = useParams();
-  const id = params.id as string || "";
+  const idParam = params?.id;
+  const id = Array.isArray(idParam) ? idParam[0] : idParam ?? "";
 
   const { data: productData, isLoading: isLoadingProduct, isError: isErrorProduct, error: errorProduct } = useFetchProductQuery(id, { skip: !id });
-  const product: Product = productData?.data || {};
-  const error = errorProduct as unknown as { data: { message: string } };
+  const product = productData?.data;
+  const errorMessage = getApiErrorMessage(errorProduct);
 
   useEffect(() => {
-    if (isErrorProduct && error) {
-      toast.error(error.data.message);
+    if (isErrorProduct && errorMessage) {
+      toast.error(errorMessage);
     }
-  }, [isErrorProduct, error]);
+  }, [isErrorProduct, errorMessage]);
 
-  if (isLoadingProduct) {
-    return <div>Cargando...</div>;
+  if (!id) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <p className="text-neutral-600">Producto inválido.</p>
+      </main>
+    );
   }
 
-  if (isErrorProduct && error) {
-    return <div>{error.data.message}</div>;
+  if (isLoadingProduct) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <p className="text-neutral-600">Cargando producto...</p>
+      </main>
+    );
+  }
+
+  if (isErrorProduct) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <p className="text-neutral-600">
+          {errorMessage ?? "No se pudo cargar el producto."}
+        </p>
+      </main>
+    );
+  }
+
+  if (!product) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <p className="text-neutral-600">Producto no encontrado.</p>
+      </main>
+    );
   }
 
   return (

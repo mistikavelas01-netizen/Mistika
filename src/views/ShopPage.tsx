@@ -6,19 +6,37 @@ import ProductCarousel from "@/components/shop/ProductCarousel";
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 
 export function ShopPage() {
   const { data: productsData, isLoading: isLoadingProducts, isError: isErrorProducts, error: errorProducts } = useFetchProductsQuery(undefined, { skip: false });
   const products: Product[] = productsData?.data || [];
 
-  console.log(products);
-  const error = errorProducts as unknown as { data: { message: string } };
+  const errorMessage = getApiErrorMessage(errorProducts);
 
   useEffect(() => {
-    if (isErrorProducts && error) {
-      toast.error(error.data.message);
+    if (isErrorProducts && errorMessage) {
+      toast.error(errorMessage);
     }
-  }, [isErrorProducts, error]);
+  }, [isErrorProducts, errorMessage]);
+
+  if (isLoadingProducts) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <p className="text-neutral-600">Cargando productos...</p>
+      </main>
+    );
+  }
+
+  if (isErrorProducts) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <p className="text-neutral-600">
+          {errorMessage ?? "No se pudieron cargar los productos."}
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-10">
