@@ -166,9 +166,9 @@ export function OrderDetailAdminView() {
                 {order.orderNumber}
               </h1>
               <span
-                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${statusColors[order.status]}`}
+                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${statusColors[order.status as OrderStatus]}`}
               >
-                {statusLabels[order.status]}
+                {statusLabels[order.status as OrderStatus]}
               </span>
             </div>
             <button
