@@ -160,20 +160,20 @@ export function OrderDetailAdminView() {
               Detalle de pedido
             </p>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-4xl font-semibold tracking-[0.05em] sm:text-5xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <h1 className="text-2xl font-semibold tracking-[0.05em] sm:text-4xl lg:text-5xl">
                 {order.orderNumber}
               </h1>
               <span
-                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${statusColors[order.status as OrderStatus]}`}
+                className={`w-fit rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] sm:px-4 sm:py-2 ${statusColors[order.status as OrderStatus]}`}
               >
                 {statusLabels[order.status as OrderStatus]}
               </span>
             </div>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-red-700 transition hover:bg-red-100"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-red-700 transition hover:bg-red-100"
             >
               <Trash2 size={16} aria-hidden="true" />
               Eliminar
@@ -188,14 +188,14 @@ export function OrderDetailAdminView() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Items */}
-            <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-8">
-              <h2 className="mb-6 text-xl font-semibold tracking-[0.05em]">Productos</h2>
+            <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
+              <h2 className="mb-4 text-lg font-semibold tracking-[0.05em] sm:text-xl sm:mb-6">Productos</h2>
               {order.items && order.items.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {order.items.map((item: OrderItem) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-4 rounded-xl border border-black/10 bg-black/5 p-4"
+                      className="flex flex-col gap-3 rounded-xl border border-black/10 bg-black/5 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
                     >
                       {(item as any).product?.imageUrl && (
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-black/10 bg-white">
@@ -206,13 +206,13 @@ export function OrderDetailAdminView() {
                           />
                         </div>
                       )}
-                      <div className="flex-1">
-                        <p className="font-semibold">{item.productName}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{item.productName}</p>
                         <p className="text-sm text-black/60">
                           Cantidad: {item.quantity} × {formatPrice(item.unitPrice)}
                         </p>
                       </div>
-                      <p className="font-bold">{formatPrice(item.totalPrice)}</p>
+                      <p className="font-bold shrink-0">{formatPrice(item.totalPrice)}</p>
                     </div>
                   ))}
                 </div>
@@ -222,8 +222,8 @@ export function OrderDetailAdminView() {
             </div>
 
             {/* Customer Information */}
-            <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-8">
-              <h2 className="mb-6 text-xl font-semibold tracking-[0.05em]">Información del cliente</h2>
+            <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
+              <h2 className="mb-4 text-lg font-semibold tracking-[0.05em] sm:text-xl sm:mb-6">Información del cliente</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5">
@@ -260,12 +260,12 @@ export function OrderDetailAdminView() {
             </div>
 
             {/* Shipping Address */}
-            <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-8">
+            <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-black/5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5">
                   <MapPin size={20} className="text-black/80" aria-hidden="true" />
                 </div>
-                <h2 className="text-xl font-semibold tracking-[0.05em]">Dirección de envío</h2>
+                <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Dirección de envío</h2>
               </div>
               <div className="space-y-2">
                 <p className="font-semibold">{order.customerName}</p>
@@ -279,12 +279,12 @@ export function OrderDetailAdminView() {
 
             {/* Billing Address if different */}
             {order.billingStreet && (
-              <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-8">
+              <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
                 <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-black/5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5">
                     <CreditCard size={20} className="text-black/80" aria-hidden="true" />
                   </div>
-                  <h2 className="text-xl font-semibold tracking-[0.05em]">Dirección de facturación</h2>
+                  <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Dirección de facturación</h2>
                 </div>
                 <div className="space-y-2">
                   <p className="text-black/80">{order.billingStreet}</p>
@@ -298,17 +298,17 @@ export function OrderDetailAdminView() {
 
             {/* Notes */}
             {order.notes && (
-              <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-8">
-                <h2 className="mb-4 text-xl font-semibold tracking-[0.05em]">Notas</h2>
-                <p className="text-black/80 whitespace-pre-wrap">{order.notes}</p>
+              <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
+                <h2 className="mb-4 text-lg font-semibold tracking-[0.05em] sm:text-xl">Notas</h2>
+                <p className="text-sm text-black/80 whitespace-pre-wrap sm:text-base">{order.notes}</p>
               </div>
             )}
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Order Summary */}
-            <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)]">
+            <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6">
               <h3 className="mb-4 text-lg font-semibold tracking-[0.05em]">Resumen del pedido</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
@@ -333,8 +333,8 @@ export function OrderDetailAdminView() {
             </div>
 
             {/* Status Update */}
-            <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)]">
-              <h3 className="mb-4 text-lg font-semibold tracking-[0.05em]">Estado del pedido</h3>
+            <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6">
+              <h3 className="mb-3 text-base font-semibold tracking-[0.05em] sm:text-lg sm:mb-4">Estado del pedido</h3>
               <select
                 value={order.status}
                 onChange={(e) => handleStatusChange(e.target.value as OrderStatus)}
@@ -349,10 +349,10 @@ export function OrderDetailAdminView() {
             </div>
 
             {/* Shipping Info */}
-            <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)]">
-              <div className="mb-4 flex items-center gap-3">
-                <Truck size={20} className="text-black/80" aria-hidden="true" />
-                <h3 className="text-lg font-semibold tracking-[0.05em]">Envío</h3>
+            <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6">
+              <div className="mb-3 flex items-center gap-3 sm:mb-4">
+                <Truck size={20} className="text-black/80 shrink-0" aria-hidden="true" />
+                <h3 className="text-base font-semibold tracking-[0.05em] sm:text-lg">Envío</h3>
               </div>
               <div className="space-y-2 text-sm">
                 <p className="font-semibold uppercase tracking-[0.1em]">
@@ -373,8 +373,8 @@ export function OrderDetailAdminView() {
             </div>
 
             {/* Payment Info */}
-            <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)]">
-              <h3 className="mb-4 text-lg font-semibold tracking-[0.05em]">Pago</h3>
+            <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-6">
+              <h3 className="mb-3 text-base font-semibold tracking-[0.05em] sm:text-lg sm:mb-4">Pago</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-black/60">Método</span>

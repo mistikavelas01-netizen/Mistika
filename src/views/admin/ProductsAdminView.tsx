@@ -139,7 +139,7 @@ export function ProductsAdminView() {
           </div>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <AnimatePresence>
                 {filteredProducts.map((product: Product, index: number) => (
                   <motion.div
@@ -216,16 +216,16 @@ export function ProductsAdminView() {
                       <div className="flex gap-2">
                         <Link
                           href={`/admin/products/${product.id}`}
-                          className="flex-1 rounded-xl border border-black/10 bg-black/5 px-4 py-2 text-center text-sm font-semibold uppercase tracking-[0.1em] text-black transition hover:bg-black hover:text-white"
+                          className="flex-1 rounded-xl border border-black/10 bg-black/5 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.1em] text-black transition hover:bg-black hover:text-white sm:px-4 sm:text-sm"
                         >
-                          <Edit size={16} className="mx-auto" aria-hidden="true" />
+                          <Edit size={14} className="mx-auto sm:w-4 sm:h-4" aria-hidden="true" />
                         </Link>
                         <button
                           onClick={() => setShowDeleteModal({ id: product.id, name: product.name })}
-                          className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-red-600 transition hover:bg-red-100"
+                          className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-red-600 transition hover:bg-red-100 sm:px-4"
                           aria-label={`Eliminar ${product.name}`}
                         >
-                          <Trash2 size={16} aria-hidden="true" />
+                          <Trash2 size={14} className="sm:w-4 sm:h-4" aria-hidden="true" />
                         </button>
                       </div>
                     </div>

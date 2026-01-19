@@ -217,42 +217,49 @@ export function CategoryFormView() {
             </div>
 
             {/* Active Status */}
-            <div className="flex items-center gap-3 rounded-xl border border-black/10 bg-black/5 p-4">
-              <input
-                type="checkbox"
-                name="isActive"
-                id="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                className="h-5 w-5 rounded border-black/20 text-black focus:ring-2 focus:ring-black/20"
-              />
-              <label htmlFor="isActive" className="text-sm font-semibold text-black/80">
-                Categoría activa
-              </label>
-              <p className="ml-auto text-xs text-black/50">
+            <div className="flex flex-col gap-2 rounded-xl border border-black/10 bg-black/5 p-4 sm:flex-row sm:items-center sm:gap-3">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  id="isActive"
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  className="h-5 w-5 shrink-0 rounded border-black/20 text-black focus:ring-2 focus:ring-black/20"
+                />
+                <label htmlFor="isActive" className="text-sm font-semibold text-black/80">
+                  Categoría activa
+                </label>
+              </div>
+              <p className="text-xs text-black/50 sm:ml-auto">
                 Las categorías inactivas no aparecerán en el selector de productos
               </p>
             </div>
 
             {/* Submit */}
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:gap-4">
               <Link
                 href="/admin/categories"
-                className="flex-1 rounded-xl border border-black/10 bg-white px-6 py-4 text-center font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black/5"
+                className="flex-1 rounded-xl border border-black/10 bg-white px-4 py-3 text-center text-sm font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black/5 sm:px-6 sm:py-4"
               >
                 Cancelar
               </Link>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-black px-6 py-4 font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-4"
               >
                 <Save size={18} aria-hidden="true" />
-                {isSubmitting
-                  ? "Guardando..."
-                  : isEditing
-                    ? "Actualizar categoría"
-                    : "Crear categoría"}
+                <span className="hidden sm:inline">
+                  {isSubmitting
+                    ? "Guardando..."
+                    : isEditing
+                      ? "Actualizar categoría"
+                      : "Crear categoría"}
+                </span>
+                <span className="sm:hidden">
+                  {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
+                </span>
               </button>
             </div>
           </form>

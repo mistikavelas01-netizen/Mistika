@@ -179,32 +179,33 @@ export function OrdersAdminView() {
                       {/* Decorative background */}
                       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-black/5 blur-2xl transition-transform duration-700 group-hover:scale-150" />
 
-                      <div className="relative flex items-center justify-between gap-4">
+                      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         {/* Left: Order info */}
                         <div className="flex-1 min-w-0">
-                          <div className="mb-2 flex items-center gap-3">
-                            <h3 className="text-lg font-bold tracking-[0.05em] truncate">
+                          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                            <h3 className="text-base font-bold tracking-[0.05em] truncate sm:text-lg">
                               {order.orderNumber}
                             </h3>
                             <span
-                              className={`rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.1em] shrink-0 ${statusColors[order.status]}`}
+                              className={`w-fit rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.1em] shrink-0 ${statusColors[order.status]}`}
                             >
                               {statusLabels[order.status]}
                             </span>
                           </div>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-black/60">
+                          <div className="flex flex-col gap-1 text-xs text-black/60 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:text-sm">
                             <p className="truncate">{order.customerName}</p>
                             <p className="truncate">{order.customerEmail}</p>
-                            <p>{formatDate(order.createdAt)}</p>
+                            <p className="hidden sm:inline">{formatDate(order.createdAt)}</p>
                           </div>
+                          <p className="mt-1 text-xs text-black/50 sm:hidden">{formatDate(order.createdAt)}</p>
                         </div>
 
                         {/* Right: Total and arrow */}
-                        <div className="flex items-center gap-4 shrink-0">
-                          <span className="text-xl font-bold">
+                        <div className="flex items-center justify-between sm:justify-end sm:gap-4 shrink-0">
+                          <span className="text-lg font-bold sm:text-xl">
                             {formatPrice(order.totalAmount)}
                           </span>
-                          <span className="text-black/40 transition-transform group-hover:translate-x-1">→</span>
+                          <span className="text-black/40 transition-transform group-hover:translate-x-1 hidden sm:inline">→</span>
                         </div>
                       </div>
                     </motion.div>

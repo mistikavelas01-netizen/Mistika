@@ -168,15 +168,15 @@ export function ProductFormView() {
                 className="lg:col-span-2 space-y-6"
               >
                 {/* Basic Info */}
-                <div className="rounded-[32px] border border-black/10 bg-white p-8 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
-                  <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-black/10 bg-black/5">
-                      <Package size={24} className="text-black/80" aria-hidden="true" />
+                <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
+                  <div className="mb-4 flex items-center gap-3 sm:mb-6">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5 sm:h-12 sm:w-12">
+                      <Package size={20} className="text-black/80 sm:w-6 sm:h-6" aria-hidden="true" />
                     </div>
-                    <h2 className="text-xl font-semibold tracking-[0.05em]">Información básica</h2>
+                    <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Información básica</h2>
                   </div>
                   
-                  <div className="space-y-5">
+                  <div className="space-y-4 sm:space-y-5">
                     <div>
                       <label className="mb-2 block text-sm font-semibold text-black/80">
                         Nombre del producto *
@@ -261,15 +261,15 @@ export function ProductFormView() {
                 </div>
 
                 {/* Pricing */}
-                <div className="rounded-[32px] border border-black/10 bg-white p-8 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
-                  <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-black/10 bg-black/5">
-                      <DollarSign size={24} className="text-black/80" aria-hidden="true" />
+                <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
+                  <div className="mb-4 flex items-center gap-3 sm:mb-6">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5 sm:h-12 sm:w-12">
+                      <DollarSign size={20} className="text-black/80 sm:w-6 sm:h-6" aria-hidden="true" />
                     </div>
-                    <h2 className="text-xl font-semibold tracking-[0.05em]">Precios y ofertas</h2>
+                    <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Precios y ofertas</h2>
                   </div>
                   
-                  <div className="space-y-5">
+                  <div className="space-y-4 sm:space-y-5">
                     <div>
                       <label className="mb-2 block text-sm font-semibold text-black/80">
                         Precio (MXN)
@@ -327,15 +327,15 @@ export function ProductFormView() {
                 </div>
 
                 {/* Inventory */}
-                <div className="rounded-[32px] border border-black/10 bg-white p-8 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
-                  <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-black/10 bg-black/5">
-                      <Box size={24} className="text-black/80" aria-hidden="true" />
+                <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
+                  <div className="mb-4 flex items-center gap-3 sm:mb-6">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5 sm:h-12 sm:w-12">
+                      <Box size={20} className="text-black/80 sm:w-6 sm:h-6" aria-hidden="true" />
                     </div>
-                    <h2 className="text-xl font-semibold tracking-[0.05em]">Inventario</h2>
+                    <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Inventario</h2>
                   </div>
                   
-                  <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
                     <div>
                       <label className="mb-2 block text-sm font-semibold text-black/80">
                         Stock disponible
@@ -374,7 +374,7 @@ export function ProductFormView() {
 
               {/* Sidebar */}
               <motion.div variants={itemVariants} className="lg:col-span-1">
-                <div className="sticky top-8 space-y-6">
+                <div className="lg:sticky lg:top-8 space-y-6">
                   {/* Image Preview */}
                   <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
                     <div className="mb-4 flex items-center gap-3">
@@ -412,22 +412,27 @@ export function ProductFormView() {
                   </div>
 
                   {/* Submit */}
-                  <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
+                  <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-4 font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-4 sm:text-base"
                   >
                     <Save size={18} aria-hidden="true" />
-                    {isSubmitting
-                      ? "Guardando..."
-                      : isEditing
-                        ? "Actualizar producto"
-                        : "Crear producto"}
+                    <span className="hidden sm:inline">
+                      {isSubmitting
+                        ? "Guardando..."
+                        : isEditing
+                          ? "Actualizar producto"
+                          : "Crear producto"}
+                    </span>
+                    <span className="sm:hidden">
+                      {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
+                    </span>
                   </button>
                     <Link
                       href="/admin/products"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-6 py-4 font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black/5"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black/5 sm:px-6 sm:py-4 sm:text-base"
                     >
                       Cancelar
                     </Link>
