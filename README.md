@@ -4,31 +4,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ### 1. Environment Setup
 
-First, create a `.env` file in the root directory by copying the template:
+First, create a `.env` file in the root directory by copying the example:
 
 ```bash
-cp env.template .env
+cp .env.example .env
 ```
 
-Then, edit `.env` with your database configuration:
-
-```env
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_USER=appuser
-DATABASE_PASSWORD=app123
-DATABASE_NAME=mistika
-DATABASE_ROOT_PASSWORD=root123
-
-# Database URL for MariaDB (Prisma uses mysql:// protocol for MariaDB)
-DATABASE_URL=mysql://appuser:app123@localhost:3306/mistika
-
-# Docker MariaDB Configuration
-MARIADB_ROOT_PASSWORD=root123
-MARIADB_DATABASE=mistika
-MARIADB_USER=appuser
-MARIADB_PASSWORD=app123
-```
+Then, edit `.env` with your local values (see `.env.example` for the required keys).
+Never commit `.env` to version control.
 
 ### 2. Start Database with Docker
 
