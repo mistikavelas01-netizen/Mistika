@@ -20,8 +20,8 @@ export const productsApi = apiSlice.injectEndpoints({
 
     // Fetch single product by ID
     fetchProduct: build.query({
-      query: (id: number) => ({
-        url: "",
+      query: (id: string) => ({
+        url: `products/${id}`,
         method: "GET",
         headers: {
           endpoint: `products/${id}`,
@@ -29,7 +29,7 @@ export const productsApi = apiSlice.injectEndpoints({
         },
       }),
       transformResponse: (response: any) => ({
-        data: response.data?.product || response.product || null,
+        data: response.data
       }),
       providesTags: (result, error, id) => [{ type: "Products", id }],
     }),

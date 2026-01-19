@@ -1,14 +1,21 @@
+"use client";
+
 import Link from "next/link";
-import { prisma } from "@/config/prisma";
-import { notFound } from "next/navigation";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { useFetchProductQuery } from "@/store/features/products/productsApi";
+import { useParams } from "next/navigation";
 
-export async function ProductPage({ id }: { id: number }) {
-  const producto = await prisma.productos.findUnique({
-    where: { id },
-  });
+export function ProductPage() {
 
-  if (!producto) notFound();
+  const params = useParams();
+  const id = params.id as string || "";
+
+  const { data: productData, isLoading: isLoadingProduct } = useFetchProductQuery(id, { skip: !id });
+  const product: Product = productData?.data || {};
+
+  if (isLoadingProduct) {
+    return <div>Cargando...</div>;
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
@@ -21,29 +28,29 @@ export async function ProductPage({ id }: { id: number }) {
           <div
             className="h-full w-full bg-cover bg-center"
             style={{
-              backgroundImage: `url(${producto.imagen ?? "/images/placeholder.jpg"})`,
+              backgroundImage: `url(${product.imageUrl ?? "/images/placeholder.jpg"})`,
             }}
           />
         </div>
 
         <div>
-          <h1 className="text-3xl font-semibold">{producto.nombre}</h1>
+          <h1 className="text-3xl font-semibold">{product.name}</h1>
 
-          {producto.descripcion ? (
-            <p className="mt-2 text-neutral-600">{producto.descripcion}</p>
+          {product.description ? (
+            <p className="mt-2 text-neutral-600">{product.description}</p>
           ) : (
             <p className="mt-2 text-neutral-600">Sin descripción por el momento.</p>
           )}
 
           <p className="mt-6 text-2xl font-medium">
-            ${producto.precio?.toString() ?? "—"} MXN
+            ${product.price?.toString() ?? "—"} MXN
           </p>
 
           <AddToCartButton
-            id={producto.id}
-            name={producto.nombre}
-            price={producto.precio?.toString() ?? 0}
-            image={producto.imagen ?? null}
+            id={product.id}
+            name={product.name}
+            price={product.price?.toString() ?? 0}
+            imageUrl={product.imageUrl ?? null}
           />
         </div>
       </div>

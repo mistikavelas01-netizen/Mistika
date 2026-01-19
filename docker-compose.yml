@@ -1,14 +1,27 @@
-version: "3.9"
-
+version: "3.8"
 services:
   mariadb:
-    image: mariadb:11.4
+    image: mariadb:latest
+    container_name: mariadb_local
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - .env
+    environment:
+      # Use MARIADB_* variables if defined, otherwise fallback to DATABASE_* or defaults
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-${DATABASE_ROOT_PASSWORD:-root123}}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-${DATABASE_NAME:-mistika}}
+      MARIADB_USER: ${MARIADB_USER:-${DATABASE_USER:-appuser}}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-${DATABASE_PASSWORD:-app123}}
     ports:
-      - "3306:3306"
+      - "${DATABASE_PORT:-3306}:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+      - ./mysql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   mariadb_data:

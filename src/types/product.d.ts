@@ -1,22 +1,22 @@
 /**
- * Product types based on Prisma schema
+ * Product types
  * Available globally without import
  */
 
 declare global {
   /**
-   * Product model from database
+   * Product model from database (matches Prisma schema)
    */
   type Product = {
     id: number;
     name: string;
     description: string | null;
     price: number | null; // Decimal from DB converted to number
-    image: string | null;
+    imageUrl: string | null;
     slug: string | null;
     category: string;
     stock: number;
-    active: boolean;
+    isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
   };
@@ -28,11 +28,11 @@ declare global {
     name: string;
     description?: string | null;
     price?: number | null;
-    image?: string | null;
+    imageUrl?: string | null;
     slug?: string | null;
     category?: string;
     stock?: number;
-    active?: boolean;
+    isActive?: boolean;
   };
 
   /**
@@ -43,19 +43,19 @@ declare global {
     name: string;
     description?: string | null;
     price: number | string;
-    image?: string | null;
+    imageUrl?: string | null;
     category?: string;
     stock?: number;
   };
 
   /**
-   * Product card props
+   * Product card props (matches Product schema)
    */
   type ProductCardProps = {
     id: number;
     name: string;
     price: number | string;
-    image?: string | null;
+    imageUrl?: string | null;
   };
 }
 

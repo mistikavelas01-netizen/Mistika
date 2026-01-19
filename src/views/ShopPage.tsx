@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { prisma } from "@/config/prisma";
 import { AddToCartIconButton } from "@/components/cart/AddToCartIconButton";
 import ProductCarousel from "@/components/shop/ProductCarousel";
 
-export async function ShopPage() {
-  const productos = await prisma.productos.findMany({
-    orderBy: { id: "desc" },
-  });
+export function ShopPage() {
+  // TODO: Fetch products from your database connection
+  const productos: Product[] = [];
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-10">
@@ -34,8 +32,13 @@ export async function ShopPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {productos.map((p) => (
-          <Link
+        {productos.length === 0 ? (
+          <div className="col-span-full text-center text-neutral-600">
+            No hay productos disponibles
+          </div>
+        ) : (
+          productos.map((p) => (
+            <Link
             key={p.id}
             href={`/shop/${p.id}`}
             className="group overflow-hidden rounded-2xl border hover:bg-neutral-50"
@@ -44,28 +47,29 @@ export async function ShopPage() {
               <div
                 className="h-full w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.03]"
                 style={{
-                  backgroundImage: `url(${p.imagen ?? "/images/products/placeholder.jpg"})`,
+                  backgroundImage: `url(${p.imageUrl ?? "/images/products/placeholder.jpg"})`,
                 }}
               />
 
               <div className="absolute right-3 top-3">
                 <AddToCartIconButton
                   id={p.id}
-                  name={p.nombre}
-                  price={p.precio?.toString() ?? 0}
-                  image={p.imagen ?? null}
+                  name={p.name}
+                  price={p.price?.toString() ?? 0}
+                  imageUrl={p.imageUrl ?? null}
                 />
               </div>
             </div>
 
             <div className="p-4">
-              <h2 className="text-lg font-medium">{p.nombre}</h2>
+              <h2 className="text-lg font-medium">{p.name}</h2>
               <p className="mt-1 text-neutral-600">
-                ${p.precio?.toString() ?? "—"} MXN
+                ${p.price?.toString() ?? "—"} MXN
               </p>
             </div>
-          </Link>
-        ))}
+            </Link>
+          ))
+        )}
       </div>
     </main>
   );

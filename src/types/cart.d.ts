@@ -10,7 +10,7 @@ declare global {
   type CartItem = {
     id?: number | string;
     name: string;
-    image?: string | null;
+    imageUrl?: string | null;
     price: number | string;
     priceNumber: number;
     quantity: number;
@@ -22,7 +22,7 @@ declare global {
   type CartItemInput = {
     id?: number | string;
     name: string;
-    image?: string | null;
+    imageUrl?: string | null;
     price: number | string;
   };
 

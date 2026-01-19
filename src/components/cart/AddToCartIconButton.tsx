@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/useToast";
 
 type Props = ProductCardProps;
 
-export function AddToCartIconButton({ id, name, price, image }: Props) {
+export function AddToCartIconButton({ id, name, price, imageUrl }: Props) {
   const { showToast } = useToast();
 
   return (
