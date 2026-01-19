@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useCart } from "@/context/cart-context";
 
@@ -15,18 +16,18 @@ export function AddToCartIconButton({ id, name, price, imageUrl }: Props) {
       aria-label={`Agregar ${name} al carrito`}
       title="Agregar al carrito"
       className="button-86"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-        addToCart({ id, name, price, imageUrl });
+      addToCart({ id, name, price, imageUrl });
         showToast({
           title: "Agregado al carrito",
           description: name,
         });
       }}
     >
-      +
+      <Plus size={18} aria-hidden="true" />
     </button>
   );
 }

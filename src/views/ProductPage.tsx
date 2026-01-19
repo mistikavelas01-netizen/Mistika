@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
+import { ArrowLeft } from "lucide-react";
 
 export function ProductPage() {
   const params = useParams();
@@ -59,8 +60,12 @@ export function ProductPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
-      <Link href="/shop" className="text-sm text-neutral-600 hover:underline">
-        ← Volver
+      <Link
+        href="/shop"
+        className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:underline"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        <span>Volver</span>
       </Link>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-2">
