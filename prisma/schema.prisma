@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model productos {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @db.VarChar(255)
+  descripcion String?  @db.Text
+  precio      Decimal? @db.Decimal(10, 2)
+  imagen      String?  @db.VarChar(255)
+  slug        String?  @db.VarChar(255)
+  categoria   String   @default("General") @db.VarChar(50)
+  stock       Int      @default(0)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.DateTime(0)
+  updatedAt   DateTime @default(now()) @db.DateTime(0)
+}
