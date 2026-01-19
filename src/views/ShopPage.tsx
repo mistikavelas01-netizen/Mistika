@@ -1,10 +1,24 @@
+"use client";
+
 import Link from "next/link";
 import { AddToCartIconButton } from "@/components/cart/AddToCartIconButton";
 import ProductCarousel from "@/components/shop/ProductCarousel";
+import { useFetchProductsQuery } from "@/store/features/products/productsApi";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
 
 export function ShopPage() {
-  // TODO: Fetch products from your database connection
-  const productos: Product[] = [];
+  const { data: productsData, isLoading: isLoadingProducts, isError: isErrorProducts, error: errorProducts } = useFetchProductsQuery(undefined, { skip: false });
+  const products: Product[] = productsData?.data || [];
+
+  console.log(products);
+  const error = errorProducts as unknown as { data: { message: string } };
+
+  useEffect(() => {
+    if (isErrorProducts && error) {
+      toast.error(error.data.message);
+    }
+  }, [isErrorProducts, error]);
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-10">
@@ -32,41 +46,41 @@ export function ShopPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {productos.length === 0 ? (
+        {products.length === 0 ? (
           <div className="col-span-full text-center text-neutral-600">
             No hay productos disponibles
           </div>
         ) : (
-          productos.map((p) => (
+          products.map((p: Product) => (
             <Link
-            key={p.id}
-            href={`/shop/${p.id}`}
-            className="group overflow-hidden rounded-2xl border hover:bg-neutral-50"
-          >
-            <div className="relative aspect-square w-full bg-neutral-100">
-              <div
-                className="h-full w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.03]"
-                style={{
-                  backgroundImage: `url(${p.imageUrl ?? "/images/products/placeholder.jpg"})`,
-                }}
-              />
-
-              <div className="absolute right-3 top-3">
-                <AddToCartIconButton
-                  id={p.id}
-                  name={p.name}
-                  price={p.price?.toString() ?? 0}
-                  imageUrl={p.imageUrl ?? null}
+              key={p.id}
+              href={`/shop/${p.id}`}
+              className="group overflow-hidden rounded-2xl border hover:bg-neutral-50"
+            >
+              <div className="relative aspect-square w-full bg-neutral-100">
+                <div
+                  className="h-full w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.03]"
+                  style={{
+                    backgroundImage: `url(${p.imageUrl ?? "/images/products/placeholder.jpg"})`,
+                  }}
                 />
-              </div>
-            </div>
 
-            <div className="p-4">
-              <h2 className="text-lg font-medium">{p.name}</h2>
-              <p className="mt-1 text-neutral-600">
-                ${p.price?.toString() ?? "—"} MXN
-              </p>
-            </div>
+                <div className="absolute right-3 top-3">
+                  <AddToCartIconButton
+                    id={p.id}
+                    name={p.name}
+                    price={p.price?.toString() ?? 0}
+                    imageUrl={p.imageUrl ?? null}
+                  />
+                </div>
+              </div>
+
+              <div className="p-4">
+                <h2 className="text-lg font-medium">{p.name}</h2>
+                <p className="mt-1 text-neutral-600">
+                  ${p.price?.toString() ?? "—"} MXN
+                </p>
+              </div>
             </Link>
           ))
         )}

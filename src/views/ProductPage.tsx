@@ -4,17 +4,30 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { useFetchProductQuery } from "@/store/features/products/productsApi";
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
 
 export function ProductPage() {
 
   const params = useParams();
   const id = params.id as string || "";
 
-  const { data: productData, isLoading: isLoadingProduct } = useFetchProductQuery(id, { skip: !id });
+  const { data: productData, isLoading: isLoadingProduct, isError: isErrorProduct, error: errorProduct } = useFetchProductQuery(id, { skip: !id });
   const product: Product = productData?.data || {};
+  const error = errorProduct as unknown as { data: { message: string } };
+
+  useEffect(() => {
+    if (isErrorProduct && error) {
+      toast.error(error.data.message);
+    }
+  }, [isErrorProduct, error]);
 
   if (isLoadingProduct) {
     return <div>Cargando...</div>;
+  }
+
+  if (isErrorProduct && error) {
+    return <div>{error.data.message}</div>;
   }
 
   return (

@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid product ID",
+          message: "Invalid product ID",
         },
         { status: 400 }
       );
@@ -31,7 +31,7 @@ export async function GET(
       return NextResponse.json(
         {
           success: false,
-          error: "Product not found",
+          message: "Product not found",
         },
         { status: 404 }
       );
@@ -46,7 +46,7 @@ export async function GET(
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch product",
+        message: "Failed to fetch product",
       },
       { status: 500 }
     );
@@ -69,7 +69,7 @@ export async function PUT(
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid product ID",
+          message: "Invalid product ID",
         },
         { status: 400 }
       );
@@ -102,7 +102,7 @@ export async function PUT(
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to update product",
+        message: "Failed to update product",
       },
       { status: 500 }
     );
