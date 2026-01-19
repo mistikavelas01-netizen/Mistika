@@ -70,7 +70,7 @@ const mailRequestSchema = z.discriminatedUnion("type", [
 
 /**
  * POST /api/mail
- * Send transactional email via SendGrid
+ * Send transactional email via Resend
  */
 export async function POST(request: NextRequest) {
   try {

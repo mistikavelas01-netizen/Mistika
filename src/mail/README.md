@@ -1,6 +1,6 @@
-# Mail System - SendGrid Integration
+# Mail System - Resend Integration
 
-Sistema completo de correo transaccional usando SendGrid vía API HTTP.
+Sistema completo de correo transaccional usando Resend vía API.
 
 ## Configuración
 
@@ -9,15 +9,15 @@ Sistema completo de correo transaccional usando SendGrid vía API HTTP.
 Agrega estas variables a tu archivo `.env`:
 
 ```env
-SENDGRID_KEY=tu_api_key_de_sendgrid
-SENDGRID_FROM_EMAIL=noreply@mistika.com
-SENDGRID_FROM_NAME=Mistika
+RESEND_KEY=tu_api_key_de_resend
+RESEND_FROM_EMAIL=noreply@mistika.com
+RESEND_FROM_NAME=Mistika
 ```
 
 ### Instalación de Dependencias
 
 ```bash
-npm install zod
+npm install resend zod
 ```
 
 ## Uso
@@ -159,7 +159,7 @@ Envía un correo transaccional.
 ```json
 {
   "ok": true,
-  "messageId": "sendgrid_message_id"
+  "messageId": "resend_message_id"
 }
 ```
 

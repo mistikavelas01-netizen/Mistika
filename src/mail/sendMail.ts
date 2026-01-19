@@ -1,6 +1,6 @@
 /**
- * SendGrid mail sender
- * Uses SendGrid v3 API via HTTP (not SMTP)
+ * Resend mail sender
+ * Uses Resend API via SDK
  */
 
 import type {
@@ -16,8 +16,7 @@ import type {
 } from "./types";
 
 import { renderTemplate } from "./templates/renderTemplate";
-
-const SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send";
+import { Resend } from "resend";
 
 /**
  * Validate email format
@@ -38,16 +37,16 @@ function getTemplateName(type: MailType): string {
  * Validate required environment variables
  */
 function validateEnv(): { ok: boolean; error?: string } {
-  if (!process.env.SENDGRID_KEY) {
-    return { ok: false, error: "SENDGRID_KEY is not set" };
+  if (!process.env.RESEND_KEY) {
+    return { ok: false, error: "RESEND_KEY is not set" };
   }
 
-  if (!process.env.SENDGRID_FROM_EMAIL) {
-    return { ok: false, error: "SENDGRID_FROM_EMAIL is not set" };
+  if (!process.env.RESEND_FROM_EMAIL) {
+    return { ok: false, error: "RESEND_FROM_EMAIL is not set" };
   }
 
-  if (!isValidEmail(process.env.SENDGRID_FROM_EMAIL)) {
-    return { ok: false, error: "SENDGRID_FROM_EMAIL is not a valid email" };
+  if (!isValidEmail(process.env.RESEND_FROM_EMAIL)) {
+    return { ok: false, error: "RESEND_FROM_EMAIL is not a valid email" };
   }
 
   return { ok: true };
@@ -74,7 +73,7 @@ function getSubject(type: MailType, payload: MailPayload): string {
 }
 
 /**
- * Send email via SendGrid API
+ * Send email via Resend API
  */
 export async function sendMail({
   type,
@@ -82,7 +81,6 @@ export async function sendMail({
   payload,
 }: SendMailParams): Promise<SendMailResult> {
   try {
-    // Validate environment
     const envCheck = validateEnv();
     if (!envCheck.ok) {
       console.error("[Mail] Environment validation failed:", envCheck.error);
@@ -95,66 +93,33 @@ export async function sendMail({
       return { ok: false, error: "Invalid recipient email address" };
     }
 
-    // Render templates
     const templateName = getTemplateName(type);
     const { html, txt } = await renderTemplate(templateName, payload);
 
-    // Get subject
     const subject = getSubject(type, payload);
 
-    // Build SendGrid request
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL!;
-    const fromName = process.env.SENDGRID_FROM_NAME || "Mistika";
+    const fromEmail = process.env.RESEND_FROM_EMAIL!;
+    const fromName = process.env.RESEND_FROM_NAME || "Mistika";
+    const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
-    const requestBody = {
-      personalizations: [
-        {
-          to: [{ email: to }],
-          subject,
-        },
-      ],
-      from: {
-        email: fromEmail,
-        name: fromName,
-      },
-      content: [
-        {
-          type: "text/html",
-          value: html,
-        },
-        {
-          type: "text/plain",
-          value: txt,
-        },
-      ],
-    };
-
-    // Send via SendGrid API
-    const response = await fetch(SENDGRID_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.SENDGRID_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
+    const resend = new Resend(process.env.RESEND_KEY!);
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+      text: txt,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[Mail] SendGrid API error:", {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-      });
-
+    if (error) {
+      console.error("[Mail] Resend API error:", error);
       return {
         ok: false,
-        error: `SendGrid API error: ${response.status} ${response.statusText}`,
+        error: error.message || "Resend API error",
       };
     }
 
-    // Extract message ID from response headers if available
-    const messageId = response.headers.get("x-message-id") || undefined;
+    const messageId = data?.id;
 
     console.log("[Mail] Email sent successfully:", {
       type,

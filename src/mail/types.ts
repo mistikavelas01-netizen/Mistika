@@ -55,18 +55,3 @@ export interface SendMailResult {
   messageId?: string;
   error?: string;
 }
-
-export interface SendGridEmailRequest {
-  personalizations: Array<{
-    to: Array<{ email: string; name?: string }>;
-    subject: string;
-  }>;
-  from: {
-    email: string;
-    name?: string;
-  };
-  content: Array<{
-    type: "text/html" | "text/plain";
-    value: string;
-  }>;
-}
