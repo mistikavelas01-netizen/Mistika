@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
 
-    const category = await prisma.categories.create({
+    const categories = await prisma.categories.create({
       data: {
         name: body.name,
         slug,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: category,
+      data: categories,
     });
   } catch (error: any) {
     console.error("Error creating category:", error);
