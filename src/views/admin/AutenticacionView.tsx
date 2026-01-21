@@ -60,8 +60,8 @@ export default function AutenticacionView() {
       toast.success("Sesión iniciada correctamente");
       router.push("/admin");
       router.refresh();
-    } catch (err: any) {
-      const errorMessage = err.message || "Error al iniciar sesión";
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error al iniciar sesión";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
