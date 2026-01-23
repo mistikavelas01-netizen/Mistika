@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
+import {
+  clearStoredToken,
+  getStoredToken,
+  isTokenValid,
+  setStoredToken,
+} from "@/lib/auth/client";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -34,6 +40,20 @@ export default function AutenticacionView() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    const token = getStoredToken();
+    if (!token) {
+      return;
+    }
+
+    if (isTokenValid(token)) {
+      router.replace("/admin");
+      return;
+    }
+
+    clearStoredToken();
+  }, [router]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -57,6 +77,11 @@ export default function AutenticacionView() {
         throw new Error(data.error || "Error al iniciar sesión");
       }
 
+      if (!data?.token) {
+        throw new Error("No se recibio un token valido");
+      }
+
+      setStoredToken(data.token);
       toast.success("Sesión iniciada correctamente");
       router.push("/admin");
       router.refresh();

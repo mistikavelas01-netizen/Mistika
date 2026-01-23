@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "../../lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 /**
  * GET /api/orders/[id]
  * Fetch a single order by ID
+ * Requires admin authentication with full signature verification
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);
@@ -70,11 +78,18 @@ export async function GET(
 /**
  * PUT /api/orders/[id]
  * Update an order
+ * Requires admin authentication with full signature verification
  */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);
@@ -134,11 +149,18 @@ export async function PUT(
 /**
  * DELETE /api/orders/[id]
  * Delete an order
+ * Requires admin authentication with full signature verification
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "../lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 /**
  * GET /api/categories
  * Fetch all categories
  * Query params: activeOnly (default: false) - if true, only return active categories
+ * Public route - no authentication required
  */
 export async function GET(request: NextRequest) {
   try {
@@ -39,8 +41,15 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/categories
  * Create a new category
+ * Requires admin authentication with full signature verification
  */
 export async function POST(request: NextRequest) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const body = await request.json();
 

@@ -103,3 +103,15 @@ model order_items {
 
   @@map("order_items")
 }
+
+model admins {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(100)
+  passwordHash String   @db.VarChar(64)
+  passwordSalt String   @db.VarChar(32)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.DateTime(0)
+  updatedAt    DateTime @default(now()) @db.DateTime(0)
+
+  @@map("admins")
+}

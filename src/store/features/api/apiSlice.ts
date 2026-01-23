@@ -1,10 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getStoredToken } from "@/lib/auth/client";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: "/api",
   prepareHeaders: (headers) => {
-    // Add any default headers here if needed
-    // For example, authentication tokens
+    // Add admin token to headers if available
+    const token = getStoredToken();
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
     return headers;
   },
 });
