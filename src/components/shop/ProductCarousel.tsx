@@ -4,8 +4,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const slides = [
-  "https://res.cloudinary.com/di3ldc36w/image/upload/v1768882074/Screenshot_2026-01-19_at_3.55.53_p.m._w6jtpm.png",
-  "https://res.cloudinary.com/di3ldc36w/image/upload/v1768882074/Screenshot_2026-01-19_at_3.55.53_p.m._w6jtpm.png"
+  "https://res.cloudinary.com/dmfwlwtsa/image/upload/v1768961418/Vela_qoeuqi.jpg",
+  "https://res.cloudinary.com/dmfwlwtsa/image/upload/v1768961418/Home_q5q6go.jpg",
+  "https://res.cloudinary.com/dmfwlwtsa/image/upload/v1768961417/Materiales_ah5rex.jpg",
+  "https://res.cloudinary.com/dmfwlwtsa/image/upload/v1768961416/Palos_yoao2d.jpg",
 ];
 
 export default function ProductCarousel() {

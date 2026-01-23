@@ -3,10 +3,23 @@
 USE `mistika`;
 
 -- Drop tables in reverse order of dependencies
+DROP TABLE IF EXISTS `admins`;
 DROP TABLE IF EXISTS `order_items`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `products`;
 DROP TABLE IF EXISTS `categories`;
+
+-- Create admins table
+CREATE TABLE `admins` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(100) NOT NULL UNIQUE,
+  `passwordHash` CHAR(64) NOT NULL,
+  `passwordSalt` CHAR(32) NOT NULL,
+  `isActive` BOOLEAN NOT NULL DEFAULT TRUE,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Create categories table
 CREATE TABLE `categories` (
@@ -19,6 +32,11 @@ CREATE TABLE `categories` (
   `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert admin (username: admin, password: admin123)
+INSERT INTO `admins`
+(`id`, `username`, `passwordHash`, `passwordSalt`, `isActive`, `createdAt`, `updatedAt`) VALUES
+(1, 'admin', '92250c624aff76ef7940f58824669522602c89fbaddc3c410d08da0c37b32c31', 'e848adffb2191dd2ed8a01cf9ebe6f01', TRUE, NOW(), NOW());
 
 -- Create products table
 CREATE TABLE `products` (

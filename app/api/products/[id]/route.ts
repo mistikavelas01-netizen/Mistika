@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "../../lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 /**
  * GET /api/products/[id]
  * Fetch a single product by ID
+ * Public route - no authentication required
  */
 export async function GET(
   request: NextRequest,
@@ -59,11 +61,18 @@ export async function GET(
 /**
  * PUT /api/products/[id]
  * Update a product
+ * Requires admin authentication with full signature verification
  */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);
@@ -136,11 +145,18 @@ export async function PUT(
 /**
  * DELETE /api/products/[id]
  * Delete a product
+ * Requires admin authentication with full signature verification
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);
