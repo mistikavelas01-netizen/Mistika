@@ -62,6 +62,22 @@ export const ordersApi = apiSlice.injectEndpoints({
       providesTags: (result, error, orderNumber) => [{ type: "Orders", id: orderNumber }],
     }),
 
+    // Fetch order details by ID with token (public access)
+    fetchOrderDetailsWithToken: build.query({
+      query: ({ id, token }: { id: number; token: string }) => 
+        `/orders/details/${id}?token=${encodeURIComponent(token)}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return { data: response.data };
+        }
+        if (response.data) {
+          return { data: response.data };
+        }
+        return { data: response };
+      },
+      providesTags: (result, error, { id }) => [{ type: "Orders", id: String(id) }],
+    }),
+
     // Create order (mutation)
     createOrder: build.mutation({
       query: (orderData: OrderInput) => ({
@@ -119,6 +135,7 @@ export const {
   useFetchOrdersQuery,
   useFetchOrderQuery,
   useFetchOrderByNumberQuery,
+  useFetchOrderDetailsWithTokenQuery,
   useCreateOrderMutation,
   useUpdateOrderMutation,
   useDeleteOrderMutation,

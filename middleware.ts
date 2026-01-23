@@ -51,6 +51,11 @@ export function middleware(request: NextRequest) {
       return true;
     }
 
+    // GET order details con token - público para clientes (requiere token válido)
+    if (pathname.match(/^\/api\/orders\/details\/\d+$/) && method === "GET") {
+      return true;
+    }
+
     return false;
   })();
 

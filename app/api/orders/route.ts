@@ -193,8 +193,10 @@ export async function POST(request: NextRequest) {
         .filter(Boolean)
         .join("\n");
 
-      // Build order URL
-      const orderUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/orders/${order.orderNumber}`;
+      // Build order URL with secure token
+      const { generateOrderDetailUrl } = await import("@/lib/order-token");
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const orderUrl = generateOrderDetailUrl(order.id, order.orderNumber, baseUrl);
 
       await sendMail({
         type: "order-confirmation",
