@@ -16,6 +16,7 @@ import {
   AlertCircle,
   ArrowRight,
   Eye,
+  Home,
 } from "lucide-react";
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
 import { useFetchOrdersQuery } from "@/store/features/orders/ordersApi";
@@ -120,14 +121,23 @@ export function DashboardView() {
               </h1>
             </div>
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex items-center gap-2 self-start rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-black/70 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-            >
-              <LogOut size={18} />
-              Cerrar sesión
-            </button>
+            <div className="flex items-center gap-2 self-start">
+              <Link
+                href="/"
+                className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-black/70 transition hover:bg-black hover:text-white"
+              >
+                <Home size={18} />
+                <span className="hidden sm:inline">Ver tienda</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-black/70 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              >
+                <LogOut size={18} />
+                <span className="hidden sm:inline">Cerrar sesión</span>
+              </button>
+            </div>
           </div>
         </motion.div>
 
