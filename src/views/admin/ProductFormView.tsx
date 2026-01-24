@@ -3,31 +3,30 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Save, Package, Image as ImageIcon, DollarSign, Box } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Package,
+  Image as ImageIcon,
+  DollarSign,
+  Box,
+  Tag,
+  Link as LinkIcon,
+  Check,
+  X,
+  Percent,
+  Eye,
+} from "lucide-react";
 import Link from "next/link";
-import { useFetchProductQuery, useCreateProductMutation, useUpdateProductMutation } from "@/store/features/products/productsApi";
+import Image from "next/image";
+import {
+  useFetchProductQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+} from "@/store/features/products/productsApi";
 import { useFetchCategoriesQuery } from "@/store/features/categories/categoriesApi";
 import toast from "react-hot-toast";
 import { CloudinaryUploadWidget } from "@/components/widget/Cloudinary";
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
-};
 
 export function ProductFormView() {
   const router = useRouter();
@@ -39,7 +38,8 @@ export function ProductFormView() {
   const { data: productData, isLoading } = useFetchProductQuery(id, {
     skip: !isEditing,
   });
-  const { data: categoriesData, isLoading: isLoadingCategories } = useFetchCategoriesQuery(true); // Only active categories for product form
+  const { data: categoriesData, isLoading: isLoadingCategories } =
+    useFetchCategoriesQuery(true);
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
@@ -71,7 +71,13 @@ export function ProductFormView() {
         isOnSale: product.isOnSale || false,
         imageUrl: product.imageUrl || "",
         slug: product.slug || "",
-        categoryId: product.categoryId?.toString() || (typeof product.category === "object" ? product.category?.id?.toString() : "") || categories[0]?.id?.toString() || "",
+        categoryId:
+          product.categoryId?.toString() ||
+          (typeof product.category === "object"
+            ? product.category?.id?.toString()
+            : "") ||
+          categories[0]?.id?.toString() ||
+          "",
         stock: product.stock?.toString() || "0",
         isActive: product.isActive ?? true,
       });
@@ -79,7 +85,9 @@ export function ProductFormView() {
   }, [product, isEditing]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
@@ -87,6 +95,16 @@ export function ProductFormView() {
       [name]:
         type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
+  };
+
+  const generateSlug = () => {
+    const slug = formData.name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setFormData((prev) => ({ ...prev, slug }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,13 +135,24 @@ export function ProductFormView() {
     }
   };
 
+  const formatPrice = (price: string) => {
+    if (!price) return "$0.00";
+    return `$${parseFloat(price).toFixed(2)}`;
+  };
+
+  const categoryName =
+    categories.find((c: Category) => c.id.toString() === formData.categoryId)
+      ?.name || "Sin categoría";
+
   if (isEditing && isLoading) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
-        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="rounded-[32px] border border-black/10 bg-white p-16 text-center shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-black/10 border-t-black" />
-            <p className="text-black/60">Cargando producto...</p>
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-black/10 border-t-black" />
+              <p className="text-black/60">Cargando producto...</p>
+            </div>
           </div>
         </div>
       </main>
@@ -131,187 +160,181 @@ export function ProductFormView() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5 pb-24 lg:pb-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
         >
-          {/* Header */}
-          <motion.div variants={itemVariants} className="mb-8">
-            <Link
-              href="/admin/products"
-              className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-black/60 transition hover:text-black"
-            >
-              <ArrowLeft size={18} aria-hidden="true" />
-              <span className="uppercase tracking-[0.2em]">Volver a productos</span>
-            </Link>
-            <div className="mb-2">
-              <p className="text-xs uppercase tracking-[0.4em] text-black/50">
-                {isEditing ? "Edición" : "Creación"}
-              </p>
-            </div>
-            <h1 className="text-4xl font-semibold tracking-[0.05em] sm:text-5xl">
-              {isEditing ? "Editar producto" : "Nuevo producto"}
-            </h1>
-            <p className="mt-3 text-base text-black/60">
-              {isEditing ? "Modifica la información del producto" : "Completa la información para crear un nuevo producto"}
-            </p>
-          </motion.div>
+          <Link
+            href="/admin/products"
+            className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-black/60 transition hover:text-black"
+          >
+            <ArrowLeft size={18} />
+            <span className="uppercase tracking-[0.2em]">Productos</span>
+          </Link>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-6 lg:grid-cols-3">
-              {/* Main Form */}
-              <motion.div
-                variants={itemVariants}
-                className="lg:col-span-2 space-y-6"
-              >
-                {/* Basic Info */}
-                <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
-                  <div className="mb-4 flex items-center gap-3 sm:mb-6">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5 sm:h-12 sm:w-12">
-                      <Package size={20} className="text-black/80 sm:w-6 sm:h-6" aria-hidden="true" />
-                    </div>
-                    <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Información básica</h2>
+          <h1 className="text-3xl font-semibold tracking-[0.05em] sm:text-4xl">
+            {isEditing ? "Editar producto" : "Nuevo producto"}
+          </h1>
+        </motion.div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Left Column - Form Fields */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="space-y-6 lg:col-span-2"
+            >
+              {/* Basic Info Card */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="border-b border-black/10 bg-black/5 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <Package size={18} className="text-black/70" />
+                    <h2 className="font-semibold">Información básica</h2>
+                  </div>
+                </div>
+                <div className="space-y-5 p-5">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-black/70">
+                      Nombre del producto *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      placeholder="Ej: Vela aromática de canela"
+                      className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
                   </div>
 
-                  <div className="space-y-4 sm:space-y-5">
-                    <div>
-                      <label className="mb-2 block text-sm font-semibold text-black/80">
-                        Nombre del producto *
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        placeholder="Ej: Vela aromática de canela"
-                        className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-                      />
-                    </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-black/70">
+                      Descripción
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Describe las características del producto..."
+                      className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
 
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-black/80">
-                        Descripción
-                      </label>
-                      <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        rows={4}
-                        placeholder="Describe el producto..."
-                        className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-                      />
-                    </div>
-
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold text-black/80">
+                      <label className="mb-1.5 block text-sm font-medium text-black/70">
+                        <div className="flex items-center gap-2">
+                          <Tag size={14} />
                           Categoría *
-                        </label>
-                        {isLoadingCategories ? (
-                          <div className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-black/60">
-                            Cargando categorías...
-                          </div>
-                        ) : categories.length === 0 ? (
-                          <div className="w-full rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3.5 text-sm text-yellow-800">
-                            No hay categorías disponibles.{" "}
-                            <Link
-                              href="/admin/categories/new"
-                              className="font-semibold underline hover:text-yellow-900"
-                            >
-                              Crear una categoría
-                            </Link>
-                          </div>
-                        ) : (
-                          <select
-                            name="categoryId"
-                            value={formData.categoryId}
-                            onChange={handleChange}
-                            required
-                            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-                          >
-                            <option value="">Selecciona una categoría</option>
-                            {categories.map((cat: Category) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
+                        </div>
+                      </label>
+                      {isLoadingCategories ? (
+                        <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-black/50">
+                          Cargando...
+                        </div>
+                      ) : categories.length === 0 ? (
+                        <Link
+                          href="/admin/categories/new"
+                          className="flex items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
+                        >
+                          + Crear categoría primero
+                        </Link>
+                      ) : (
+                        <select
+                          name="categoryId"
+                          value={formData.categoryId}
+                          onChange={handleChange}
+                          required
+                          className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                        >
+                          <option value="">Seleccionar</option>
+                          {categories.map((cat: Category) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
 
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold text-black/80">
-                          Slug (URL amigable)
-                        </label>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-black/70">
+                        <div className="flex items-center gap-2">
+                          <LinkIcon size={14} />
+                          Slug
+                        </div>
+                      </label>
+                      <div className="flex gap-2">
                         <input
                           type="text"
                           name="slug"
                           value={formData.slug}
                           onChange={handleChange}
-                          placeholder="producto-slug"
-                          className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                          placeholder="url-amigable"
+                          className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
                         />
+                        <button
+                          type="button"
+                          onClick={generateSlug}
+                          className="shrink-0 rounded-xl border border-black/10 px-3 text-xs font-medium text-black/60 transition hover:bg-black/5"
+                          title="Generar desde nombre"
+                        >
+                          Auto
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Pricing */}
-                <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
-                  <div className="mb-4 flex items-center gap-3 sm:mb-6">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5 sm:h-12 sm:w-12">
-                      <DollarSign size={20} className="text-black/80 sm:w-6 sm:h-6" aria-hidden="true" />
-                    </div>
-                    <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Precios y ofertas</h2>
+              {/* Pricing Card */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="border-b border-black/10 bg-black/5 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <DollarSign size={18} className="text-black/70" />
+                    <h2 className="font-semibold">Precio</h2>
                   </div>
-
-                  <div className="space-y-4 sm:space-y-5">
+                </div>
+                <div className="space-y-5 p-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-black/80">
-                        Precio (MXN)
+                      <label className="mb-1.5 block text-sm font-medium text-black/70">
+                        Precio regular (MXN)
                       </label>
-                      <input
-                        type="number"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleChange}
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-                      />
-                    </div>
-
-                    <div className="rounded-xl border border-black/10 bg-black/5 p-4">
-                      <label className="flex cursor-pointer items-center gap-3">
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40">
+                          $
+                        </span>
                         <input
-                          type="checkbox"
-                          name="isOnSale"
-                          checked={formData.isOnSale}
+                          type="number"
+                          name="price"
+                          value={formData.price}
                           onChange={handleChange}
-                          className="h-5 w-5 rounded border-black/20 text-black focus:ring-2 focus:ring-black/20"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          className="w-full rounded-xl border border-black/10 bg-white py-3 pl-8 pr-4 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
                         />
-                        <div>
-                          <span className="block font-semibold text-black/90">Producto en oferta</span>
-                          <span className="text-sm text-black/60">Activa esta opción para ofrecer un precio especial</span>
-                        </div>
-                      </label>
+                      </div>
                     </div>
 
-                    {formData.isOnSale && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <label className="mb-2 block text-sm font-semibold text-black/80">
-                          Precio con descuento (MXN)
-                        </label>
+                    <div>
+                      <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-black/70">
+                        <Percent size={14} />
+                        Precio de oferta (MXN)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40">
+                          $
+                        </span>
                         <input
                           type="number"
                           name="discountPrice"
@@ -320,25 +343,67 @@ export function ProductFormView() {
                           step="0.01"
                           min="0"
                           placeholder="0.00"
-                          className="w-full rounded-xl border border-red-300 bg-red-50 px-4 py-3.5 text-black transition focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                          disabled={!formData.isOnSale}
+                          className="w-full rounded-xl border border-black/10 bg-white py-3 pl-8 pr-4 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10 disabled:cursor-not-allowed disabled:bg-black/5 disabled:text-black/30"
                         />
-                      </motion.div>
-                    )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* On Sale Toggle */}
+                  <div
+                    className={`flex items-center justify-between rounded-xl border p-4 transition ${
+                      formData.isOnSale
+                        ? "border-red-200 bg-red-50"
+                        : "border-black/10 bg-black/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                          formData.isOnSale ? "bg-red-500 text-white" : "bg-black/10"
+                        }`}
+                      >
+                        <Percent size={16} />
+                      </div>
+                      <div>
+                        <p className="font-medium">Producto en oferta</p>
+                        <p className="text-xs text-black/50">
+                          Mostrar precio con descuento
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, isOnSale: !prev.isOnSale }))
+                      }
+                      className={`relative h-7 w-12 rounded-full transition ${
+                        formData.isOnSale ? "bg-red-500" : "bg-black/20"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
+                          formData.isOnSale ? "left-6" : "left-1"
+                        }`}
+                      />
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                {/* Inventory */}
-                <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6 lg:p-8">
-                  <div className="mb-4 flex items-center gap-3 sm:mb-6">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-black/5 sm:h-12 sm:w-12">
-                      <Box size={20} className="text-black/80 sm:w-6 sm:h-6" aria-hidden="true" />
-                    </div>
-                    <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Inventario</h2>
+              {/* Inventory Card */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="border-b border-black/10 bg-black/5 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <Box size={18} className="text-black/70" />
+                    <h2 className="font-semibold">Inventario y estado</h2>
                   </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+                </div>
+                <div className="p-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-black/80">
+                      <label className="mb-1.5 block text-sm font-medium text-black/70">
                         Stock disponible
                       </label>
                       <input
@@ -347,84 +412,195 @@ export function ProductFormView() {
                         value={formData.stock}
                         onChange={handleChange}
                         min="0"
-                        placeholder="0"
-                        className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                        className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
                       />
                     </div>
 
-                    <div className="flex items-end">
-                      <div className="w-full rounded-xl border border-black/10 bg-black/5 p-4">
-                        <label className="flex cursor-pointer items-center gap-3">
-                          <input
-                            type="checkbox"
-                            name="isActive"
-                            checked={formData.isActive}
-                            onChange={handleChange}
-                            className="h-5 w-5 rounded border-black/20 text-black focus:ring-2 focus:ring-black/20"
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-black/70">
+                        Estado del producto
+                      </label>
+                      <div
+                        className={`flex items-center justify-between rounded-xl border p-3 ${
+                          formData.isActive
+                            ? "border-green-200 bg-green-50"
+                            : "border-black/10 bg-black/5"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {formData.isActive ? (
+                            <Check size={16} className="text-green-600" />
+                          ) : (
+                            <X size={16} className="text-black/40" />
+                          )}
+                          <span
+                            className={
+                              formData.isActive
+                                ? "font-medium text-green-700"
+                                : "text-black/50"
+                            }
+                          >
+                            {formData.isActive ? "Activo" : "Inactivo"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              isActive: !prev.isActive,
+                            }))
+                          }
+                          className={`relative h-7 w-12 rounded-full transition ${
+                            formData.isActive ? "bg-green-500" : "bg-black/20"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
+                              formData.isActive ? "left-6" : "left-1"
+                            }`}
                           />
-                          <div>
-                            <span className="block font-semibold text-black/90">Producto activo</span>
-                            <span className="text-sm text-black/60">Visible en la tienda</span>
-                          </div>
-                        </label>
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
+            </motion.div>
 
-              {/* Sidebar */}
-              <motion.div variants={itemVariants} className="lg:col-span-1">
-                <div className="lg:sticky lg:top-8 space-y-6">
-                  {/* Image Upload */}
-                  <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-black/5">
-                        <ImageIcon size={20} className="text-black/80" aria-hidden="true" />
-                      </div>
-                      <h3 className="font-semibold tracking-[0.05em]">Imagen</h3>
-                    </div>
-
-                    <CloudinaryUploadWidget
-                      currentImageUrl={formData.imageUrl}
-                      onUploadSuccess={(url) => {
-                        setFormData((prev) => ({ ...prev, imageUrl: url }));
-                      }}
-                      folder="products"
-                    />
-                  </div>
-
-                  {/* Submit */}
-                  <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-4 sm:text-base"
-                    >
-                      <Save size={18} aria-hidden="true" />
-                      <span className="hidden sm:inline">
-                        {isSubmitting
-                          ? "Guardando..."
-                          : isEditing
-                            ? "Actualizar producto"
-                            : "Crear producto"}
-                      </span>
-                      <span className="sm:hidden">
-                        {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
-                      </span>
-                    </button>
-                    <Link
-                      href="/admin/products"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black/5 sm:px-6 sm:py-4 sm:text-base"
-                    >
-                      Cancelar
-                    </Link>
+            {/* Right Column - Image & Preview */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-6 lg:col-span-1"
+            >
+              {/* Image Upload */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="border-b border-black/10 bg-black/5 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <ImageIcon size={18} className="text-black/70" />
+                    <h2 className="font-semibold">Imagen</h2>
                   </div>
                 </div>
-              </motion.div>
-            </div>
-          </form>
-        </motion.div>
+                <div className="p-5">
+                  <CloudinaryUploadWidget
+                    currentImageUrl={formData.imageUrl}
+                    onUploadSuccess={(url) => {
+                      setFormData((prev) => ({ ...prev, imageUrl: url }));
+                    }}
+                    folder="products"
+                  />
+                </div>
+              </div>
+
+              {/* Live Preview */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="border-b border-black/10 bg-black/5 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <Eye size={18} className="text-black/70" />
+                    <h2 className="font-semibold">Vista previa</h2>
+                  </div>
+                </div>
+                <div className="p-5">
+                  {/* Mini Product Card Preview */}
+                  <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+                    <div className="relative aspect-square bg-black/5">
+                      {formData.imageUrl ? (
+                        <Image
+                          src={formData.imageUrl}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Package size={40} className="text-black/20" />
+                        </div>
+                      )}
+                      {formData.isOnSale && (
+                        <div className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                          OFERTA
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h4 className="truncate font-semibold text-sm">
+                        {formData.name || "Nombre del producto"}
+                      </h4>
+                      <p className="text-xs text-black/50">{categoryName}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        {formData.isOnSale && formData.discountPrice ? (
+                          <>
+                            <span className="font-semibold text-red-600">
+                              {formatPrice(formData.discountPrice)}
+                            </span>
+                            <span className="text-xs text-black/40 line-through">
+                              {formatPrice(formData.price)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="font-semibold">
+                            {formatPrice(formData.price)}
+                          </span>
+                        )}
+                      </div>
+                      {!formData.isActive && (
+                        <div className="mt-2 rounded bg-black/10 px-2 py-1 text-center text-[10px] font-medium text-black/50">
+                          INACTIVO
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Actions */}
+              <div className="hidden space-y-3 lg:block">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-4 font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Save size={18} />
+                  {isSubmitting
+                    ? "Guardando..."
+                    : isEditing
+                      ? "Guardar cambios"
+                      : "Crear producto"}
+                </button>
+                <Link
+                  href="/admin/products"
+                  className="flex w-full items-center justify-center rounded-xl border border-black/10 px-6 py-4 font-medium text-black/70 transition hover:bg-black/5"
+                >
+                  Cancelar
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </form>
+
+        {/* Mobile Fixed Bottom Actions */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/10 bg-white p-4 lg:hidden">
+          <div className="flex gap-3">
+            <Link
+              href="/admin/products"
+              className="flex flex-1 items-center justify-center rounded-xl border border-black/10 py-3 font-medium text-black/70"
+            >
+              Cancelar
+            </Link>
+            <button
+              type="submit"
+              form="product-form"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-black py-3 font-semibold text-white disabled:opacity-50"
+            >
+              <Save size={18} />
+              {isSubmitting ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   );
