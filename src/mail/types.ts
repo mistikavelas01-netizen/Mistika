@@ -2,7 +2,7 @@
  * Mail types and payload definitions
  */
 
-export type MailType = "welcome" | "verify-email" | "reset-password" | "generic" | "order-confirmation";
+export type MailType = "welcome" | "verify-email" | "reset-password" | "generic" | "order-confirmation" | "order-status";
 
 export interface WelcomePayload {
   name: string;
@@ -37,12 +37,20 @@ export interface OrderConfirmationPayload {
   orderUrl?: string;
 }
 
+export interface OrderStatusPayload {
+  name: string;
+  orderNumber: string;
+  status: "processing" | "shipped" | "delivered";
+  orderUrl: string;
+}
+
 export type MailPayload =
   | WelcomePayload
   | VerifyEmailPayload
   | ResetPasswordPayload
   | GenericPayload
-  | OrderConfirmationPayload;
+  | OrderConfirmationPayload
+  | OrderStatusPayload;
 
 export interface SendMailParams {
   type: MailType;

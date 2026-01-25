@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CartPage } from "@/views/CartPage";
+import { CartPage } from "@/views/cart/CartPage";
 
 export const metadata: Metadata = {
   title: "Carrito",

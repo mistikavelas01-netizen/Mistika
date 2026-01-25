@@ -4,33 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Save, Tag } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Tag,
+  Link as LinkIcon,
+  FileText,
+  Check,
+  X,
+  Eye,
+} from "lucide-react";
 import {
   useFetchCategoryQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from "@/store/features/categories/categoriesApi";
 import toast from "react-hot-toast";
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
-};
 
 export function CategoryFormView() {
   const router = useRouter();
@@ -43,8 +32,10 @@ export function CategoryFormView() {
     skip: !isEditing,
   });
 
-  const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
-  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
+  const [createCategory, { isLoading: isCreating }] =
+    useCreateCategoryMutation();
+  const [updateCategory, { isLoading: isUpdating }] =
+    useUpdateCategoryMutation();
 
   const category = categoryData?.data;
   const isSubmitting = isCreating || isUpdating;
@@ -56,7 +47,6 @@ export function CategoryFormView() {
     isActive: true,
   });
 
-  // Generate slug from name
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
@@ -88,8 +78,10 @@ export function CategoryFormView() {
           type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
       };
 
-      // Auto-generate slug when name changes (only if slug is empty or matches previous generated slug)
-      if (name === "name" && (!prev.slug || prev.slug === generateSlug(prev.name))) {
+      if (
+        name === "name" &&
+        (!prev.slug || prev.slug === generateSlug(prev.name))
+      ) {
         newData.slug = generateSlug(value);
       }
 
@@ -101,17 +93,17 @@ export function CategoryFormView() {
     e.preventDefault();
 
     try {
-      const categoryData = {
+      const categoryPayload = {
         ...formData,
         description: formData.description || null,
       };
 
       if (isEditing) {
-        await updateCategory({ id: parseInt(id), ...categoryData }).unwrap();
-        toast.success("Categoría actualizada correctamente");
+        await updateCategory({ id: parseInt(id), ...categoryPayload }).unwrap();
+        toast.success("Categoría actualizada");
       } else {
-        await createCategory(categoryData).unwrap();
-        toast.success("Categoría creada correctamente");
+        await createCategory(categoryPayload).unwrap();
+        toast.success("Categoría creada");
       }
 
       router.push("/admin/categories");
@@ -123,10 +115,12 @@ export function CategoryFormView() {
   if (isLoading) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
-        <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="rounded-[32px] border border-black/10 bg-white p-16 text-center shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-black/10 border-t-black" />
-            <p className="text-black/60">Cargando categoría...</p>
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-black/10 border-t-black" />
+              <p className="text-black/60">Cargando categoría...</p>
+            </div>
           </div>
         </div>
       </main>
@@ -134,137 +128,272 @@ export function CategoryFormView() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
-      <motion.div
-        className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-      >
+    <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5 pb-24 lg:pb-8">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
-        <motion.div variants={itemVariants} className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
           <Link
             href="/admin/categories"
             className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-black/60 transition hover:text-black"
           >
-            <ArrowLeft size={18} aria-hidden="true" />
-            <span className="uppercase tracking-[0.2em]">Volver a categorías</span>
+            <ArrowLeft size={18} />
+            <span className="uppercase tracking-[0.2em]">Categorías</span>
           </Link>
-          <div className="mb-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-black/50">
-              {isEditing ? "Editar" : "Nueva"} categoría
-            </p>
-          </div>
-          <h1 className="text-4xl font-semibold tracking-[0.05em] sm:text-5xl">
+
+          <h1 className="text-3xl font-semibold tracking-[0.05em] sm:text-4xl">
             {isEditing ? "Editar categoría" : "Nueva categoría"}
           </h1>
         </motion.div>
 
-        {/* Form */}
-        <motion.div
-          variants={itemVariants}
-          className="rounded-[32px] border border-black/10 bg-white p-8 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-10"
-        >
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-black/80">
-                Nombre *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-                placeholder="Ej: Velas aromáticas"
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-6 lg:grid-cols-5">
+            {/* Left Column - Form */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="space-y-6 lg:col-span-3"
+            >
+              {/* Basic Info */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="border-b border-black/10 bg-black/5 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <Tag size={18} className="text-black/70" />
+                    <h2 className="font-semibold">Información</h2>
+                  </div>
+                </div>
+                <div className="space-y-5 p-5">
+                  {/* Name */}
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-black/70">
+                      Nombre *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      placeholder="Ej: Velas aromáticas"
+                      className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
 
-            {/* Slug */}
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-black/80">
-                Slug *
-              </label>
-              <input
-                type="text"
-                name="slug"
-                value={formData.slug}
-                onChange={handleChange}
-                required
-                className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10 font-mono text-sm"
-                placeholder="Ej: velas-aromaticas"
-              />
-              <p className="mt-2 text-xs text-black/50">
-                URL amigable (se genera automáticamente desde el nombre)
-              </p>
-            </div>
+                  {/* Slug */}
+                  <div>
+                    <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-black/70">
+                      <LinkIcon size={14} />
+                      Slug
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        name="slug"
+                        value={formData.slug}
+                        onChange={handleChange}
+                        required
+                        placeholder="velas-aromaticas"
+                        className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 font-mono text-sm transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            slug: generateSlug(prev.name),
+                          }))
+                        }
+                        className="shrink-0 rounded-xl border border-black/10 px-3 text-xs font-medium text-black/60 transition hover:bg-black/5"
+                        title="Generar desde nombre"
+                      >
+                        Auto
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-xs text-black/40">
+                      URL amigable para la categoría
+                    </p>
+                  </div>
 
-            {/* Description */}
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-black/80">
-                Descripción
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-                className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-                placeholder="Descripción opcional de la categoría"
-              />
-            </div>
-
-            {/* Active Status */}
-            <div className="flex flex-col gap-2 rounded-xl border border-black/10 bg-black/5 p-4 sm:flex-row sm:items-center sm:gap-3">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={handleChange}
-                  className="h-5 w-5 shrink-0 rounded border-black/20 text-black focus:ring-2 focus:ring-black/20"
-                />
-                <label htmlFor="isActive" className="text-sm font-semibold text-black/80">
-                  Categoría activa
-                </label>
+                  {/* Description */}
+                  <div>
+                    <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-black/70">
+                      <FileText size={14} />
+                      Descripción
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Descripción opcional..."
+                      className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-black/50 sm:ml-auto">
-                Las categorías inactivas no aparecerán en el selector de productos
-              </p>
-            </div>
 
-            {/* Submit */}
-            <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:gap-4">
-              <Link
-                href="/admin/categories"
-                className="flex-1 rounded-xl border border-black/10 bg-white px-4 py-3 text-center text-sm font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black/5 sm:px-6 sm:py-4"
-              >
-                Cancelar
-              </Link>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-4"
-              >
-                <Save size={18} aria-hidden="true" />
-                <span className="hidden sm:inline">
+              {/* Status Card */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="p-5">
+                  <div
+                    className={`flex items-center justify-between rounded-xl border p-4 transition ${
+                      formData.isActive
+                        ? "border-green-200 bg-green-50"
+                        : "border-black/10 bg-black/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                          formData.isActive
+                            ? "bg-green-500 text-white"
+                            : "bg-black/10 text-black/40"
+                        }`}
+                      >
+                        {formData.isActive ? (
+                          <Check size={20} />
+                        ) : (
+                          <X size={20} />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">
+                          {formData.isActive
+                            ? "Categoría activa"
+                            : "Categoría inactiva"}
+                        </p>
+                        <p className="text-xs text-black/50">
+                          {formData.isActive
+                            ? "Visible en el selector de productos"
+                            : "No aparecerá en el selector"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          isActive: !prev.isActive,
+                        }))
+                      }
+                      className={`relative h-7 w-12 rounded-full transition ${
+                        formData.isActive ? "bg-green-500" : "bg-black/20"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
+                          formData.isActive ? "left-6" : "left-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Column - Preview & Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-6 lg:col-span-2"
+            >
+              {/* Preview */}
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="border-b border-black/10 bg-black/5 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <Eye size={18} className="text-black/70" />
+                    <h2 className="font-semibold">Vista previa</h2>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="rounded-xl border border-black/10 bg-white p-4">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-black/5">
+                        <Tag size={18} className="text-black/60" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="truncate font-semibold">
+                          {formData.name || "Nombre de la categoría"}
+                        </h4>
+                        <code className="text-xs text-black/40">
+                          /{formData.slug || "slug"}
+                        </code>
+                      </div>
+                    </div>
+                    {formData.description && (
+                      <p className="mb-3 text-sm text-black/60 line-clamp-2">
+                        {formData.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      {formData.isActive ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                          Activa
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                          <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                          Inactiva
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Actions */}
+              <div className="hidden space-y-3 lg:block">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-4 font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Save size={18} />
                   {isSubmitting
                     ? "Guardando..."
                     : isEditing
-                      ? "Actualizar categoría"
+                      ? "Guardar cambios"
                       : "Crear categoría"}
-                </span>
-                <span className="sm:hidden">
-                  {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
-                </span>
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </motion.div>
+                </button>
+                <Link
+                  href="/admin/categories"
+                  className="flex w-full items-center justify-center rounded-xl border border-black/10 px-6 py-4 font-medium text-black/70 transition hover:bg-black/5"
+                >
+                  Cancelar
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </form>
+
+        {/* Mobile Fixed Bottom Actions */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/10 bg-white p-4 lg:hidden">
+          <div className="flex gap-3">
+            <Link
+              href="/admin/categories"
+              className="flex flex-1 items-center justify-center rounded-xl border border-black/10 py-3 font-medium text-black/70"
+            >
+              Cancelar
+            </Link>
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-black py-3 font-semibold text-white disabled:opacity-50"
+            >
+              <Save size={18} />
+              {isSubmitting ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

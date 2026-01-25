@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "../../lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { sendMail } from "@/mail/sendMail";
+import type { OrderStatusPayload } from "@/mail/types";
 
 /**
  * GET /api/orders/[id]
  * Fetch a single order by ID
+ * Requires admin authentication with full signature verification
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);
@@ -70,11 +80,18 @@ export async function GET(
 /**
  * PUT /api/orders/[id]
  * Update an order
+ * Requires admin authentication with full signature verification
  */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);
@@ -90,6 +107,22 @@ export async function PUT(
     }
 
     const body = await request.json();
+
+    // Get current order to check if status is changing
+    const currentOrder = await prisma.orders.findUnique({
+      where: { id },
+      select: { status: true, customerEmail: true, customerName: true, orderNumber: true },
+    });
+
+    if (!currentOrder) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 }
+      );
+    }
 
     const updateData: any = {};
     if (body.status !== undefined) updateData.status = body.status;
@@ -115,6 +148,33 @@ export async function PUT(
       },
     });
 
+    // Send email notification if status changed to processing, shipped, or delivered
+    const statusesToNotify = ["processing", "shipped", "delivered"];
+    if (
+      body.status &&
+      body.status !== currentOrder.status &&
+      statusesToNotify.includes(body.status)
+    ) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const orderUrl = `${baseUrl}/orders/${order.orderNumber}`;
+
+      const emailPayload: OrderStatusPayload = {
+        name: currentOrder.customerName,
+        orderNumber: order.orderNumber,
+        status: body.status as "processing" | "shipped" | "delivered",
+        orderUrl,
+      };
+
+      // Send email asynchronously (don't wait for it)
+      sendMail({
+        type: "order-status",
+        to: currentOrder.customerEmail,
+        payload: emailPayload,
+      }).catch((err) => {
+        console.error("[Orders API] Failed to send status email:", err);
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: order,
@@ -134,11 +194,18 @@ export async function PUT(
 /**
  * DELETE /api/orders/[id]
  * Delete an order
+ * Requires admin authentication with full signature verification
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const { id: idParam } = await params;
     const id = parseInt(idParam);

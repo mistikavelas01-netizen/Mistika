@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "../lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/mail/sendMail";
+import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 /**
  * GET /api/orders
  * Fetch orders with pagination and optional status filter
  * Query params: page (default: 1), limit (default: 20), status (optional)
+ * Requires admin authentication with full signature verification
  */
 export async function GET(request: NextRequest) {
+  // Verificar autenticación con validación completa de firma
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) {
+    return auth.response;
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -77,6 +85,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/orders
  * Create a new order
+ * Public route - customers can create orders
  */
 export async function POST(request: NextRequest) {
   try {
@@ -184,8 +193,10 @@ export async function POST(request: NextRequest) {
         .filter(Boolean)
         .join("\n");
 
-      // Build order URL
-      const orderUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/orders/${order.orderNumber}`;
+      // Build order URL with secure token
+      const { generateOrderDetailUrl } = await import("@/lib/order-token");
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const orderUrl = generateOrderDetailUrl(order.id, order.orderNumber, baseUrl);
 
       await sendMail({
         type: "order-confirmation",

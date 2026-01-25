@@ -13,6 +13,7 @@ import type {
   ResetPasswordPayload,
   GenericPayload,
   OrderConfirmationPayload,
+  OrderStatusPayload,
 } from "./types";
 
 import { renderTemplate } from "./templates/renderTemplate";
@@ -65,6 +66,15 @@ function getSubject(type: MailType, payload: MailPayload): string {
       return "Restablece tu contraseña";
     case "order-confirmation":
       return `Confirmación de pedido #${(payload as OrderConfirmationPayload).orderNumber}`;
+    case "order-status": {
+      const statusPayload = payload as OrderStatusPayload;
+      const statusText = {
+        processing: "Tu pedido está siendo preparado",
+        shipped: "Tu pedido ha sido enviado",
+        delivered: "Tu pedido ha sido entregado",
+      };
+      return `${statusText[statusPayload.status]} - #${statusPayload.orderNumber}`;
+    }
     case "generic":
       return (payload as GenericPayload).subject;
     default:

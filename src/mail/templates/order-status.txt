@@ -1,0 +1,16 @@
+MISTIKA
+=======
+
+{{statusTitle}}
+
+Hola {{name}},
+
+{{statusMessage}}
+
+Número de pedido: {{orderNumber}}
+
+Ver detalles del pedido: {{orderUrl}}
+
+---
+¿Tienes preguntas? Responde a este correo.
+© 2024 Mistika. Todos los derechos reservados.

@@ -40,11 +40,43 @@ const templates: Record<string, { html: string; txt: string }> = {
     html: readTemplate("order-confirmation.html"),
     txt: readTemplate("order-confirmation.txt"),
   },
+  "order-status": {
+    html: readTemplate("order-status.html"),
+    txt: readTemplate("order-status.txt"),
+  },
   generic: {
     html: readTemplate("generic.html"),
     txt: readTemplate("generic.txt"),
   },
 };
+
+/**
+ * Get status-specific content for order status emails
+ */
+function getStatusContent(status: string): { title: string; message: string } {
+  switch (status) {
+    case "processing":
+      return {
+        title: "¡Tu pedido está siendo preparado!",
+        message: "Estamos preparando tu pedido con mucho cuidado. Te notificaremos cuando sea enviado.",
+      };
+    case "shipped":
+      return {
+        title: "¡Tu pedido ha sido enviado!",
+        message: "Tu pedido está en camino. Pronto llegará a tu puerta.",
+      };
+    case "delivered":
+      return {
+        title: "¡Tu pedido ha sido entregado!",
+        message: "Tu pedido ha sido entregado exitosamente. ¡Gracias por tu compra!",
+      };
+    default:
+      return {
+        title: "Actualización de tu pedido",
+        message: "El estado de tu pedido ha sido actualizado.",
+      };
+  }
+}
 
 /**
  * Format price for display
@@ -131,23 +163,55 @@ function replaceVariables(template: string, payload: MailPayload): string {
   }
 
   if ("orderUrl" in payload && payload.orderUrl) {
-    const isHtml = template.includes("<html") || template.includes("<table");
-    if (isHtml) {
-      const orderUrlHtml = `
+    // For order-status template, just replace the URL directly
+    if (template.includes("order-status") || template.includes("Ver detalles del pedido")) {
+      result = result.replace(/\{\{orderUrl\}\}/g, payload.orderUrl);
+    } else {
+      const isHtml = template.includes("<html") || template.includes("<table");
+      if (isHtml) {
+        const orderUrlHtml = `
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${payload.orderUrl}" style="display: inline-block; padding: 14px 32px; background-color: #000000; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em;">
                   Ver detalles del pedido
                 </a>
               </div>
             `;
-      result = result.replace(/\{\{orderUrl\}\}/g, orderUrlHtml);
-    } else {
-      const orderUrlTxt = `\n\nVer detalles del pedido: ${payload.orderUrl}\n`;
-      result = result.replace(/\{\{orderUrl\}\}/g, orderUrlTxt);
+        result = result.replace(/\{\{orderUrl\}\}/g, orderUrlHtml);
+      } else {
+        const orderUrlTxt = `\n\nVer detalles del pedido: ${payload.orderUrl}\n`;
+        result = result.replace(/\{\{orderUrl\}\}/g, orderUrlTxt);
+      }
     }
   } else {
     // Remove orderUrl placeholder if not provided
     result = result.replace(/\{\{orderUrl\}\}/g, "");
+  }
+
+  // Handle order status specific variables
+  if ("status" in payload && payload.status) {
+    const statusContent = getStatusContent(payload.status);
+    result = result.replace(/\{\{statusTitle\}\}/g, statusContent.title);
+    result = result.replace(/\{\{statusMessage\}\}/g, statusContent.message);
+    
+    // Handle conditional blocks for status icons
+    const isProcessing = payload.status === "processing";
+    const isShipped = payload.status === "shipped";
+    const isDelivered = payload.status === "delivered";
+    
+    // Simple conditional replacement (remove blocks that don't match)
+    if (isProcessing) {
+      result = result.replace(/\{\{#if isProcessing\}\}([\s\S]*?)\{\{\/if\}\}/g, "$1");
+      result = result.replace(/\{\{#if isShipped\}\}[\s\S]*?\{\{\/if\}\}/g, "");
+      result = result.replace(/\{\{#if isDelivered\}\}[\s\S]*?\{\{\/if\}\}/g, "");
+    } else if (isShipped) {
+      result = result.replace(/\{\{#if isShipped\}\}([\s\S]*?)\{\{\/if\}\}/g, "$1");
+      result = result.replace(/\{\{#if isProcessing\}\}[\s\S]*?\{\{\/if\}\}/g, "");
+      result = result.replace(/\{\{#if isDelivered\}\}[\s\S]*?\{\{\/if\}\}/g, "");
+    } else if (isDelivered) {
+      result = result.replace(/\{\{#if isDelivered\}\}([\s\S]*?)\{\{\/if\}\}/g, "$1");
+      result = result.replace(/\{\{#if isProcessing\}\}[\s\S]*?\{\{\/if\}\}/g, "");
+      result = result.replace(/\{\{#if isShipped\}\}[\s\S]*?\{\{\/if\}\}/g, "");
+    }
   }
 
   // Clean up any remaining unused variables
