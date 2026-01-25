@@ -3,7 +3,15 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Package, MapPin, Mail, Phone, Truck, CheckCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Package,
+  MapPin,
+  Mail,
+  Phone,
+  Truck,
+  CheckCircle,
+} from "lucide-react";
 import { useFetchOrderByNumberQuery } from "@/store/features/orders/ordersApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 
@@ -28,7 +36,7 @@ export function OrderDetailView() {
   const orderNumberParam = params?.orderNumber;
   const orderNumber = Array.isArray(orderNumberParam)
     ? orderNumberParam[0]
-    : orderNumberParam ?? "";
+    : (orderNumberParam ?? "");
 
   const {
     data: orderData,
@@ -146,14 +154,19 @@ export function OrderDetailView() {
           >
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle size={24} className="text-green-700" aria-hidden="true" />
+                <CheckCircle
+                  size={24}
+                  className="text-green-700"
+                  aria-hidden="true"
+                />
               </div>
               <div>
                 <h3 className="mb-2 text-lg font-semibold text-green-900">
                   ¡Pedido recibido!
                 </h3>
                 <p className="text-sm text-green-800">
-                  Tu pedido ha sido recibido y está siendo procesado. Te enviaremos un correo de confirmación a {order.customerEmail}
+                  Tu pedido ha sido recibido y está siendo procesado. Te
+                  enviaremos un correo de confirmación a {order.customerEmail}
                 </p>
               </div>
             </div>
@@ -165,7 +178,9 @@ export function OrderDetailView() {
           <div className="lg:col-span-2 space-y-6">
             {/* Order Items */}
             <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-8">
-              <h2 className="mb-6 text-xl font-semibold tracking-[0.05em]">Productos</h2>
+              <h2 className="mb-6 text-xl font-semibold tracking-[0.05em]">
+                Productos
+              </h2>
               {order.items && order.items.length > 0 ? (
                 <div className="space-y-4">
                   {order.items.map((item: OrderItem) => (
@@ -185,15 +200,20 @@ export function OrderDetailView() {
                       <div className="flex-1">
                         <p className="font-semibold">{item.productName}</p>
                         <p className="text-sm text-black/60">
-                          Cantidad: {item.quantity} × {formatPrice(item.unitPrice)}
+                          Cantidad: {item.quantity} ×{" "}
+                          {formatPrice(item.unitPrice)}
                         </p>
                       </div>
-                      <p className="font-bold">{formatPrice(item.totalPrice)}</p>
+                      <p className="font-bold">
+                        {formatPrice(item.totalPrice)}
+                      </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-black/60">No hay productos en este pedido.</p>
+                <p className="text-black/60">
+                  No hay productos en este pedido.
+                </p>
               )}
             </div>
 
@@ -201,7 +221,11 @@ export function OrderDetailView() {
             <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)] sm:p-8">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-black/5">
-                  <MapPin size={20} className="text-black/80" aria-hidden="true" />
+                  <MapPin
+                    size={20}
+                    className="text-black/80"
+                    aria-hidden="true"
+                  />
                 </div>
                 <h2 className="text-xl font-semibold tracking-[0.05em]">
                   Dirección de envío
@@ -209,11 +233,10 @@ export function OrderDetailView() {
               </div>
               <div className="space-y-2">
                 <p className="font-semibold">{order.customerName}</p>
+                <p className="text-black/80">{order.shippingStreet}</p>
                 <p className="text-black/80">
-                  {order.shippingStreet}
-                </p>
-                <p className="text-black/80">
-                  {order.shippingCity}, {order.shippingState} {order.shippingZip}
+                  {order.shippingCity}, {order.shippingState}{" "}
+                  {order.shippingZip}
                 </p>
                 <p className="text-black/80">{order.shippingCountry}</p>
               </div>
@@ -230,20 +253,30 @@ export function OrderDetailView() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-black/60">Subtotal</span>
-                  <span className="font-semibold">{formatPrice(order.subtotal)}</span>
+                  <span className="font-semibold">
+                    {formatPrice(order.subtotal)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-black/60">Envío</span>
-                  <span className="font-semibold">{formatPrice(order.shippingCost)}</span>
+                  <span className="font-semibold">
+                    {formatPrice(order.shippingCost)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-black/60">IVA (16%)</span>
-                  <span className="font-semibold">{formatPrice(order.tax)}</span>
+                  <span className="font-semibold">
+                    {formatPrice(order.tax)}
+                  </span>
                 </div>
                 <div className="border-t border-black/10 pt-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold uppercase tracking-[0.1em]">Total</span>
-                    <span className="text-xl font-bold">{formatPrice(order.totalAmount)}</span>
+                    <span className="font-semibold uppercase tracking-[0.1em]">
+                      Total
+                    </span>
+                    <span className="text-xl font-bold">
+                      {formatPrice(order.totalAmount)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -256,18 +289,34 @@ export function OrderDetailView() {
               </h3>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-3">
-                  <Mail size={16} className="mt-0.5 text-black/60" aria-hidden="true" />
+                  <Mail
+                    size={16}
+                    className="mt-0.5 text-black/60"
+                    aria-hidden="true"
+                  />
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-black/50">Email</p>
-                    <p className="font-medium text-black/90">{order.customerEmail}</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-black/50">
+                      Email
+                    </p>
+                    <p className="font-medium text-black/90">
+                      {order.customerEmail}
+                    </p>
                   </div>
                 </div>
                 {order.customerPhone && (
                   <div className="flex items-start gap-3">
-                    <Phone size={16} className="mt-0.5 text-black/60" aria-hidden="true" />
+                    <Phone
+                      size={16}
+                      className="mt-0.5 text-black/60"
+                      aria-hidden="true"
+                    />
                     <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-black/50">Teléfono</p>
-                      <p className="font-medium text-black/90">{order.customerPhone}</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-black/50">
+                        Teléfono
+                      </p>
+                      <p className="font-medium text-black/90">
+                        {order.customerPhone}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -282,20 +331,22 @@ export function OrderDetailView() {
                   Envío
                 </h3>
               </div>
+
               <div className="space-y-2 text-sm">
                 <p className="font-semibold uppercase tracking-[0.1em]">
-                  {order.shippingMethod === "standard"
-                    ? "Estándar"
-                    : order.shippingMethod === "express"
-                      ? "Express"
-                      : "Overnight"}
+                  {order.shippingMethod === "xalapa"
+                    ? "En Xalapa"
+                    : order.shippingMethod === "fuera"
+                      ? "Fuera de Xalapa"
+                      : "No especificado"}
                 </p>
+
                 <p className="text-black/60">
-                  {order.shippingMethod === "standard"
-                    ? "5-7 días hábiles"
-                    : order.shippingMethod === "express"
-                      ? "2-3 días hábiles"
-                      : "24 horas"}
+                  {order.shippingMethod === "xalapa"
+                    ? "Costo de envío: $100.00 MXN"
+                    : order.shippingMethod === "fuera"
+                      ? "Costo de envío: $180.00 MXN"
+                      : "—"}
                 </p>
               </div>
             </div>
