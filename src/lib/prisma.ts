@@ -12,11 +12,11 @@ const globalForPrisma = globalThis as unknown as {
  */
 function makePrismaClient() {
   // Get connection details from environment variables
-  const host = process.env.DATABASE_HOST || process.env.MARIADB_HOST || "localhost";
-  const port = Number(process.env.DATABASE_PORT || process.env.MARIADB_PORT || 3306);
-  const user = process.env.DATABASE_USER || process.env.MARIADB_USER || "root";
-  const password = process.env.DATABASE_PASSWORD || process.env.MARIADB_PASSWORD || "";
-  const database = process.env.DATABASE_NAME || process.env.MARIADB_DATABASE || "mistika";
+  const host = process.env.DATABASE_HOST || "localhost";
+  const port = Number(process.env.DATABASE_PORT || 3306);
+  const user = process.env.DATABASE_USER || "root";
+  const password = process.env.DATABASE_PASSWORD || "";
+  const database = process.env.DATABASE_NAME || "mistika";
 
   if (!host || !user || !database) {
     throw new Error(

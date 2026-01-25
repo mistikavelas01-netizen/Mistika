@@ -1,10 +1,10 @@
 import "server-only";
 import crypto from "crypto";
 
-const ORDER_TOKEN_SECRET = process.env.ORDER_TOKEN_SECRET || process.env.JWT_SECRET;
+const ORDER_TOKEN_SECRET = process.env.JWT_SECRET;
 
 if (!ORDER_TOKEN_SECRET) {
-  throw new Error("ORDER_TOKEN_SECRET or JWT_SECRET must be set in environment variables");
+  throw new Error("JWT_SECRET must be set in environment variables");
 }
 
 /**
