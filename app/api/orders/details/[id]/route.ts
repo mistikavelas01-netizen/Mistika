@@ -1,0 +1,88 @@
+import { NextRequest, NextResponse } from "next/server";
+import {
+  ordersRepo,
+  orderItemsRepo,
+  productsRepo,
+  categoriesRepo,
+  toApiEntity,
+} from "@/firebase/repos";
+import { verifyOrderToken } from "@/lib/order-token";
+
+async function enrichOrderWithItemsAndCategory(order: Awaited<ReturnType<typeof ordersRepo.getById>>) {
+  if (!order) return null;
+  const items = await orderItemsRepo.where("orderId", "==", order._id!);
+  const productIds = [...new Set(items.map((i) => i.productId))];
+  const products = await Promise.all(productIds.map((id) => productsRepo.getById(id)));
+  const productMap = new Map(products.filter(Boolean).map((p) => [p!._id, p]));
+  const categoryIds = [...new Set(products.filter(Boolean).map((p) => p!.categoryId))];
+  const categories = await Promise.all(categoryIds.map((id) => categoriesRepo.getById(id)));
+  const categoryMap = new Map(categories.filter(Boolean).map((c) => [c!._id, c]));
+
+  const itemsWithProduct = items.map((item) => {
+    const product = productMap.get(item.productId);
+    const category = product ? categoryMap.get(product.categoryId) : null;
+    return {
+      ...toApiEntity(item),
+      product: product
+        ? {
+            id: product._id,
+            name: product.name,
+            imageUrl: product.imageUrl ?? null,
+            category: category ? toApiEntity(category) : undefined,
+          }
+        : undefined,
+    };
+  });
+
+  return {
+    ...toApiEntity(order),
+    items: itemsWithProduct,
+  };
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const token = request.nextUrl.searchParams.get("token");
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Token requerido para acceder a los detalles del pedido",
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!verifyOrderToken(id, token)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Token inválido o no autorizado para este pedido",
+        },
+        { status: 403 }
+      );
+    }
+
+    const order = await ordersRepo.getById(id);
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: "Pedido no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    const data = await enrichOrderWithItemsAndCategory(order);
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    return NextResponse.json(
+      { success: false, error: "Error al obtener los detalles del pedido" },
+      { status: 500 }
+    );
+  }
+}

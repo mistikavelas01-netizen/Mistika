@@ -1,0 +1,26 @@
+MISTIKA
+
+¡Pedido confirmado!
+
+Hola {{name}},
+
+Gracias por tu compra. Hemos recibido tu pedido y comenzaremos a procesarlo de inmediato.
+
+Número de pedido: {{orderNumber}}
+Fecha: {{orderDate}}
+
+Productos:
+{{items}}
+
+Dirección de envío:
+{{shippingAddress}}
+
+Total pagado: {{totalAmount}}
+
+Recibirás un correo de confirmación cuando tu pedido sea enviado. Si tienes alguna pregunta, no dudes en contactarnos.
+
+{{orderUrl}}
+
+Gracias por elegir Mistika
+
+© 2024 Mistika. Todos los derechos reservados.

@@ -1,0 +1,15 @@
+MISTIKA
+
+Verifica tu correo electrónico
+
+Hola {{name}},
+
+Gracias por registrarte en Mistika. Para completar tu registro, por favor verifica tu dirección de correo electrónico visitando el siguiente enlace:
+
+{{verifyUrl}}
+
+Este enlace expirará en 24 horas por seguridad.
+
+Si no solicitaste este correo, puedes ignorarlo de forma segura.
+
+© 2024 Mistika. Todos los derechos reservados.

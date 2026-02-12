@@ -1,0 +1,37 @@
+import { NextRequest, NextResponse } from "next/server";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+  api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json()) as {
+      paramsToSign?: Record<string, string | number>;
+    };
+    const { paramsToSign } = body;
+
+    if (!paramsToSign) {
+      return NextResponse.json(
+        { error: "Faltan parámetros para firmar" },
+        { status: 400 }
+      );
+    }
+
+    const signature = cloudinary.utils.api_sign_request(
+      paramsToSign,
+      process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET as string
+    );
+
+    return NextResponse.json({ signature });
+  } catch (error) {
+    console.error("Error signing Cloudinary params:", error);
+    return NextResponse.json(
+      { error: "No se pudo firmar la solicitud de subida" },
+      { status: 500 }
+    );
+  }
+}

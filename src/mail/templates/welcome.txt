@@ -1,0 +1,13 @@
+MISTIKA
+
+¡Bienvenido, {{name}}!
+
+Estamos emocionados de tenerte con nosotros. Tu cuenta ha sido creada exitosamente y ya puedes comenzar a explorar nuestras velas artesanales.
+
+En Mistika encontrarás productos cuidadosamente seleccionados para transformar tu espacio en calma, aroma y presencia.
+
+Explora nuestros productos: https://mistika.com
+
+Si tienes alguna pregunta, no dudes en contactarnos.
+
+© 2024 Mistika. Todos los derechos reservados.

@@ -1,0 +1,1 @@
+export const NOT_SERVER_ERROR_IMAGE = "https://res.cloudinary.com/dpb4rfzui/image/upload/v1769296869/79dfd929-b368-4373-8b6a-ca88c3e553d2_x8vknd.jpg";
