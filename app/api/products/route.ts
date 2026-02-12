@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { productsRepo, categoriesRepo, toApiEntity } from "@/firebase/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { PLACEHOLDER_IMAGE } from "@/constant";
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching products:", error);
     return NextResponse.json(
       { success: false, error: "No se pudieron obtener los productos" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -73,6 +74,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as ProductInput;
+
+    console.log({body});
 
     let categoryId = body.categoryId;
     if (!categoryId && body.category) {
@@ -88,9 +91,12 @@ export async function POST(request: NextRequest) {
     if (!categoryId) {
       return NextResponse.json(
         { success: false, error: "El ID de la categoría es obligatorio" },
-        { status: 400 }
+        { status: 400 },
       );
     }
+
+    const imageUrl =
+      body.imageUrl && body.imageUrl.length > 0 ? body.imageUrl.trim() : PLACEHOLDER_IMAGE;
 
     const created = await productsRepo.create({
       name: body.name,
@@ -98,7 +104,7 @@ export async function POST(request: NextRequest) {
       price: body.price ?? null,
       discountPrice: body.discountPrice ?? null,
       isOnSale: body.isOnSale ?? false,
-      imageUrl: body.imageUrl ?? null,
+      imageUrl,
       slug: body.slug ?? null,
       categoryId,
       stock: body.stock ?? 0,
@@ -118,7 +124,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating product:", error);
     return NextResponse.json(
       { success: false, error: "No se pudo crear el producto" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

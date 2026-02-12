@@ -10,6 +10,7 @@ import { useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useCart } from "@/context/cart-context";
 import { ServerError } from "@/components/ui/ServerError";
+import { getProductImageUrl } from "@/constant";
 
 
 
@@ -94,7 +95,7 @@ export function ProductPage() {
       id: product.id,
       name: product.name,
       price: product.price?.toString() ?? "0",
-      imageUrl: product.imageUrl ?? null,
+      imageUrl: getProductImageUrl(product.imageUrl),
       stock: product.stock ?? 0,
     });
     toast.success(`${product.name} agregado al carrito`);
@@ -180,7 +181,7 @@ export function ProductPage() {
           >
             <div className="relative aspect-square overflow-hidden">
               <Image
-                src={product.imageUrl ?? "/images/products/placeholder.jpg"}
+                src={getProductImageUrl(product.imageUrl)}
                 alt={product.name}
                 fill
                 sizes="(min-width: 1024px) 50vw, 100vw"

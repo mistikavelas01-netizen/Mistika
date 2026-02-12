@@ -28,6 +28,7 @@ import { useFetchCategoriesQuery } from "@/store/features/categories/categoriesA
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 import toast from "react-hot-toast";
 import { CloudinaryUploadWidget } from "@/components/widget/Cloudinary";
+import { PLACEHOLDER_IMAGE } from "@/constant";
 
 export function ProductFormView() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export function ProductFormView() {
     price: "",
     discountPrice: "",
     isOnSale: false,
-    imageUrl: "",
+    imageUrl: PLACEHOLDER_IMAGE,
     slug: "",
     categoryId: "",
     stock: "0",
@@ -112,14 +113,24 @@ export function ProductFormView() {
     e.preventDefault();
 
     try {
-      const productData = {
-        ...formData,
+      const imageUrl =
+        (typeof formData.imageUrl === "string" && formData.imageUrl.trim() !== "")
+          ? formData.imageUrl.trim()
+          : PLACEHOLDER_IMAGE;
+
+      const productData: ProductInput = {
+        name: formData.name,
+        description: formData.description || null,
         price: formData.price ? parseFloat(formData.price) : null,
         discountPrice: formData.discountPrice
           ? parseFloat(formData.discountPrice)
           : null,
-        stock: parseInt(formData.stock) || 0,
+        isOnSale: formData.isOnSale,
+        imageUrl: imageUrl || PLACEHOLDER_IMAGE,
+        slug: formData.slug || null,
         categoryId: formData.categoryId || undefined,
+        stock: parseInt(formData.stock, 10) || 0,
+        isActive: formData.isActive,
       };
 
       if (isEditing) {
@@ -488,6 +499,7 @@ export function ProductFormView() {
                 <div className="p-5">
                   <CloudinaryUploadWidget
                     currentImageUrl={formData.imageUrl}
+                    defaultImageUrl={PLACEHOLDER_IMAGE}
                     onUploadSuccess={(url) => {
                       setFormData((prev) => ({ ...prev, imageUrl: url }));
                     }}

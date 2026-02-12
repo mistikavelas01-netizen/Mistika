@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AddToCartIconButton } from "@/components/cart/AddToCartIconButton";
+import { getProductImageUrl, PLACEHOLDER_IMAGE } from "@/constant";
 
 type Props = {
   product: Product;
@@ -16,7 +17,7 @@ export default function ProductCard({ product }: Props) {
   const originalPrice = product.isOnSale && product.discountPrice && product.price
     ? product.price
     : null;
-  const imageUrl = product.imageUrl || "";
+  const imageUrl = getProductImageUrl(product.imageUrl);
 
   return (
     <Link
@@ -26,7 +27,7 @@ export default function ProductCard({ product }: Props) {
       {/* Image */}
       <div className="relative aspect-square w-full overflow-hidden bg-black/5">
         <Image
-          src={imageUrl}
+          src={imageUrl && imageUrl.trim() ? imageUrl : PLACEHOLDER_IMAGE}
           alt={product.name}
           fill
           sizes="(min-width: 1280px) 22vw, (min-width: 768px) 45vw, 90vw"
@@ -42,7 +43,7 @@ export default function ProductCard({ product }: Props) {
             id={product.id}
             name={product.name}
             price={displayPrice?.toString() ?? "0"}
-            imageUrl={product.imageUrl ?? null}
+            imageUrl={imageUrl}
             stock={product.stock}
           />
         </div>

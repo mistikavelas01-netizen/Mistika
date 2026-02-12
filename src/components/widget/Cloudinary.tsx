@@ -7,6 +7,8 @@ import { Upload, X, Image as ImageIcon } from "lucide-react";
 interface CloudinaryUploadWidgetProps {
   onUploadSuccess: (url: string) => void;
   currentImageUrl?: string;
+  /** When user clears the image, pass this URL instead of "" so the form never sends empty imageUrl */
+  defaultImageUrl?: string;
   folder?: string;
   className?: string;
 }
@@ -14,6 +16,7 @@ interface CloudinaryUploadWidgetProps {
 export function CloudinaryUploadWidget({
   onUploadSuccess,
   currentImageUrl,
+  defaultImageUrl = "",
   folder = "",
   className = "",
 }: CloudinaryUploadWidgetProps) {
@@ -35,8 +38,8 @@ export function CloudinaryUploadWidget({
   };
 
   const handleClearImage = () => {
-    setPreviewUrl(undefined);
-    onUploadSuccess("");
+    setPreviewUrl(defaultImageUrl || undefined);
+    onUploadSuccess(defaultImageUrl);
   };
 
   return (

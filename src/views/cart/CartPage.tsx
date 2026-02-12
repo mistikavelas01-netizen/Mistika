@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { getProductImageUrl } from "@/constant";
 
 export function CartPage() {
   const {
@@ -132,18 +133,12 @@ export function CartPage() {
                       >
                         {/* Image */}
                         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-black/5 sm:h-28 sm:w-28">
-                          {item.imageUrl ? (
-                            <Image
-                              src={item.imageUrl}
-                              alt={item.name}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <Package size={32} className="text-black/20" />
-                            </div>
-                          )}
+                          <Image
+                            src={getProductImageUrl(item.imageUrl)}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
 
                         {/* Info */}

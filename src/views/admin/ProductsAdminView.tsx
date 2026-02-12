@@ -20,6 +20,7 @@ import {
   Tag,
   DollarSign,
 } from "lucide-react";
+import { getProductImageUrl } from "@/constant";
 import {
   useFetchProductsQuery,
   useDeleteProductMutation,
@@ -277,19 +278,13 @@ export function ProductsAdminView() {
                       {/* Product Info */}
                       <div className="col-span-5 flex items-center gap-4">
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-black/10 bg-black/5">
-                          {product.imageUrl ? (
-                            <Image
-                              src={product.imageUrl}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                              sizes="64px"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <Package size={24} className="text-black/30" />
-                            </div>
-                          )}
+                          <Image
+                            src={getProductImageUrl(product.imageUrl)}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
                           {product.isOnSale && (
                             <div className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-red-500" />
                           )}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getProductImageUrl } from "@/constant";
 import {
   ArrowLeft,
   Package,
@@ -254,18 +255,12 @@ export function OrderDetailAdminView() {
                       className="flex items-center gap-4 p-4"
                     >
                       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-black/10 bg-black/5">
-                        {item.product?.imageUrl ? (
-                          <Image
-                            src={item.product.imageUrl}
-                            alt={item.productName}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <Package size={20} className="text-black/30" />
-                          </div>
-                        )}
+                        <Image
+                          src={getProductImageUrl(item.product?.imageUrl)}
+                          alt={item.productName}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{item.productName}</p>

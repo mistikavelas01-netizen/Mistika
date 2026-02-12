@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useFetchOrderByNumberQuery } from "@/store/features/orders/ordersApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
+import { getProductImageUrl } from "@/constant";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -188,15 +189,13 @@ export function OrderDetailView() {
                       key={item.id}
                       className="flex items-center gap-4 rounded-xl border border-black/10 bg-black/5 p-4"
                     >
-                      {item.product?.imageUrl && (
-                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-black/10 bg-white">
-                          <img
-                            src={item.product.imageUrl}
-                            alt={item.productName}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      )}
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-black/10 bg-white">
+                        <img
+                          src={getProductImageUrl(item.product?.imageUrl)}
+                          alt={item.productName}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                       <div className="flex-1">
                         <p className="font-semibold">{item.productName}</p>
                         <p className="text-sm text-black/60">

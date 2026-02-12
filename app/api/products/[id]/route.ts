@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { productsRepo, categoriesRepo, toApiEntity } from "@/firebase/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { PLACEHOLDER_IMAGE } from "@/constant";
 
 export async function GET(
   request: NextRequest,
@@ -66,7 +67,12 @@ export async function PUT(
     if (body.price !== undefined) updateData.price = body.price ?? null;
     if (body.discountPrice !== undefined) updateData.discountPrice = body.discountPrice ?? null;
     if (body.isOnSale !== undefined) updateData.isOnSale = body.isOnSale;
-    if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl;
+    if (body.imageUrl !== undefined) {
+      updateData.imageUrl =
+        typeof body.imageUrl === "string" && body.imageUrl.trim() !== ""
+          ? body.imageUrl.trim()
+          : PLACEHOLDER_IMAGE;
+    }
     if (body.slug !== undefined) updateData.slug = body.slug;
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (body.stock !== undefined) updateData.stock = body.stock;
