@@ -33,12 +33,12 @@ export function proxy(request: NextRequest) {
   // Rutas públicas por método HTTP y patrón
   const isPublicRoute = (() => {
     // GET productos (individual o lista) - público
-    if (pathname.match(/^\/api\/products(\/\d+)?$/) && method === "GET") {
+    if (pathname.match(/^\/api\/products(\/[^/]+)?$/) && method === "GET") {
       return true;
     }
 
     // GET categorías (individual o lista) - público
-    if (pathname.match(/^\/api\/categories(\/\d+)?$/) && method === "GET") {
+    if (pathname.match(/^\/api\/categories(\/[^/]+)?$/) && method === "GET") {
       return true;
     }
 
