@@ -59,7 +59,7 @@ export function ProductFormView() {
     imageUrl: PLACEHOLDER_IMAGE,
     slug: "",
     categoryId: "",
-    stock: "0",
+    stock: "1",
     isActive: true,
   });
 
@@ -80,7 +80,7 @@ export function ProductFormView() {
             : "") ||
           categories[0]?.id?.toString() ||
           "",
-        stock: product.stock?.toString() || "0",
+        stock: product.stock?.toString() || "1",
         isActive: product.isActive ?? true,
       });
     }
@@ -99,6 +99,20 @@ export function ProductFormView() {
     }));
   };
 
+  /** Only allow digits and at most one decimal point (for price fields) */
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(",", ".");
+    const valid = raw === "" || /^\d*\.?\d*$/.test(raw);
+    if (valid) setFormData((prev) => ({ ...prev, [e.target.name]: raw }));
+  };
+
+  /** Only allow non-negative integers (for stock) */
+  const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const valid = raw === "" || /^\d+$/.test(raw);
+    if (valid) setFormData((prev) => ({ ...prev, stock: raw }));
+  };
+
   const generateSlug = () => {
     const slug = formData.name
       .toLowerCase()
@@ -111,6 +125,12 @@ export function ProductFormView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const stockNum = parseInt(formData.stock, 10);
+    if (!Number.isFinite(stockNum) || stockNum < 1) {
+      toast.error("La cantidad (stock) debe ser al menos 1");
+      return;
+    }
 
     try {
       const imageUrl =
@@ -129,7 +149,7 @@ export function ProductFormView() {
         imageUrl: imageUrl || PLACEHOLDER_IMAGE,
         slug: formData.slug || null,
         categoryId: formData.categoryId || undefined,
-        stock: parseInt(formData.stock, 10) || 0,
+        stock: Math.max(1, parseInt(formData.stock, 10) || 1),
         isActive: formData.isActive,
       };
 
@@ -327,12 +347,11 @@ export function ProductFormView() {
                           $
                         </span>
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           name="price"
                           value={formData.price}
-                          onChange={handleChange}
-                          step="0.01"
-                          min="0"
+                          onChange={handlePriceChange}
                           placeholder="0.00"
                           className="w-full rounded-xl border border-black/10 bg-white py-3 pl-8 pr-4 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
                         />
@@ -349,12 +368,11 @@ export function ProductFormView() {
                           $
                         </span>
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           name="discountPrice"
                           value={formData.discountPrice}
-                          onChange={handleChange}
-                          step="0.01"
-                          min="0"
+                          onChange={handlePriceChange}
                           placeholder="0.00"
                           disabled={!formData.isOnSale}
                           className="w-full rounded-xl border border-black/10 bg-white py-3 pl-8 pr-4 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10 disabled:cursor-not-allowed disabled:bg-black/5 disabled:text-black/30"
@@ -420,11 +438,13 @@ export function ProductFormView() {
                         Stock disponible
                       </label>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         name="stock"
                         value={formData.stock}
-                        onChange={handleChange}
-                        min="0"
+                        onChange={handleStockChange}
+                        placeholder="1"
+                        minLength={1}
                         className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
                       />
                     </div>
