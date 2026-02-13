@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -7,6 +8,18 @@ import { ArrowLeft, Package, MapPin, Mail, Phone, Truck, CheckCircle, AlertCircl
 import { useFetchOrderDetailsWithTokenQuery } from "@/store/features/orders/ordersApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 import { getProductImageUrl } from "@/constant";
+
+function getTokenFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("token");
+}
+
+function getOrderNumberFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("orderNumber");
+}
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -31,8 +44,23 @@ export function OrderDetailWithTokenView() {
   const idParam = params?.id;
   const orderId = typeof idParam === "string" ? idParam : Array.isArray(idParam) ? idParam[0] ?? "" : "";
 
-  const token = searchParams.get("token");
-  const orderNumber = searchParams.get("orderNumber");
+  const tokenFromParams = searchParams.get("token");
+  const orderNumberFromParams = searchParams.get("orderNumber");
+
+  const [tokenFromWindow, setTokenFromWindow] = useState<string | null>(null);
+  const [orderNumberFromWindow, setOrderNumberFromWindow] = useState<string | null>(null);
+  const [hasCheckedWindow, setHasCheckedWindow] = useState(false);
+
+  useEffect(() => {
+    const t = getTokenFromUrl();
+    const n = getOrderNumberFromUrl();
+    if (t) setTokenFromWindow(t);
+    if (n) setOrderNumberFromWindow(n);
+    setHasCheckedWindow(true);
+  }, []);
+
+  const token = tokenFromParams ?? tokenFromWindow;
+  const orderNumber = orderNumberFromParams ?? orderNumberFromWindow;
 
   const {
     data: orderData,
@@ -64,7 +92,24 @@ export function OrderDetailWithTokenView() {
     });
   };
 
-  if (!orderId || !token) {
+  const missingTokenOrId = !orderId || !token;
+  const canShowInvalidLink =
+    missingTokenOrId && (typeof window === "undefined" || hasCheckedWindow);
+
+  if (missingTokenOrId && !canShowInvalidLink) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="rounded-[32px] border border-black/10 bg-white p-16 text-center shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-black/10 border-t-black" />
+            <p className="text-black/60">Cargando pedido...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (canShowInvalidLink) {
     return (
       <main className="min-h-screen bg-white">
         <div className="mx-auto max-w-6xl px-4 py-10">
