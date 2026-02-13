@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -53,8 +54,26 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; bg: stri
   cancelled: { label: "Cancelado", color: "text-red-700", bg: "bg-red-100", icon: AlertCircle },
 };
 
+/** URL del sitio de ventas (dominio raíz). Desde admin.dominio debe ir a dominio. */
+function useStoreUrl(): string {
+  return useMemo(() => {
+    if (typeof process.env.NEXT_PUBLIC_SITE_URL === "string" && process.env.NEXT_PUBLIC_SITE_URL) {
+      return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "") || "/";
+    }
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname;
+      if (hostname.startsWith("admin.")) {
+        const mainHost = hostname.slice(6);
+        return `${window.location.protocol}//${mainHost}${window.location.port ? `:${window.location.port}` : ""}`;
+      }
+    }
+    return "/";
+  }, []);
+}
+
 export function DashboardView() {
   const router = useRouter();
+  const storeUrl = useStoreUrl();
   const { data: productsData, isLoading: isLoadingProducts, isError: isErrorProducts, refetch: refetchProducts } = useFetchProductsQuery(
     { page: 1, limit: 100 },
     { skip: false }
@@ -145,7 +164,7 @@ export function DashboardView() {
 
             <div className="flex items-center gap-2 self-start">
               <Link
-                href="/"
+                href={storeUrl}
                 className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-black/70 transition hover:bg-black hover:text-white"
               >
                 <Home size={18} />

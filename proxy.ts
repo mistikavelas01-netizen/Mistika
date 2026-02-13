@@ -1,62 +1,85 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminTokenEdge } from "@/lib/auth";
 
+const ADMIN_SUBDOMAIN = "admin";
+
 /**
- * Middleware de Next.js que se ejecuta antes de todas las requests
- * Valida autenticación para rutas admin de la API
- * 
- * Este middleware se ejecuta en Edge Runtime, por lo que usa funciones
- * compatibles con Edge (auth/edge.ts) en lugar de módulos de Node.js
+ * Determina si el host actual corresponde al subdominio de administración.
+ * Ejemplos: admin.localhost, admin.dominio.example.com
+ */
+function isAdminSubdomain(host: string): boolean {
+  const hostname = host.split(":")[0].toLowerCase();
+  const parts = hostname.split(".");
+  if (parts.length < 2) return false;
+  return parts[0] === ADMIN_SUBDOMAIN;
+}
+
+/**
+ * Proxy que se ejecuta antes de todas las requests.
+ * - Rutas de página: lógica de subdominio admin (redirect/rewrite).
+ * - Rutas de API: valida autenticación para rutas admin.
+ * Edge Runtime: usa auth/edge.ts (compatible con Edge).
  */
 export function proxy(request: NextRequest) {
+  const host = request.headers.get("host") ?? "";
   const { pathname } = request.nextUrl;
   const method = request.method;
 
-  // Solo procesar rutas de API
+  // ——— Rutas de página: subdominio admin y redirección ———
   if (!pathname.startsWith("/api/")) {
+    const isAdmin = isAdminSubdomain(host);
+
+    if (!isAdmin) {
+      // En dominio raíz: solo redirigir /admin y /login a /. El resto (incl. /cart, /orders, productos) pasa.
+      if (pathname.startsWith("/admin") || pathname === "/login") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/";
+        return NextResponse.redirect(url);
+      }
+      // /cart, /orders, /orders/..., rutas de producto, etc.: dejar pasar sin tocar
+      return NextResponse.next();
+    }
+
+    if (pathname === "/" || pathname === "") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin";
+      return NextResponse.rewrite(url);
+    }
+    if (pathname === "/login" || pathname.startsWith("/admin")) {
+      return NextResponse.next();
+    }
+    if (
+      pathname.startsWith("/products") ||
+      pathname.startsWith("/orders") ||
+      pathname.startsWith("/categories")
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/admin${pathname}`;
+      return NextResponse.rewrite(url);
+    }
+
     return NextResponse.next();
   }
 
-  // Rutas completamente públicas (cualquier método)
+  // ——— Rutas de API: validación de token admin ———
+
   const publicRoutes = [
-    "/api/auth/login", // Login es público
-    "/api/auth/verify", // Verificación de token es público (necesario para AdminGuard)
-    "/api/mail", // Mail puede ser público o tener su propia validación
-    "/api/cloudinary/sign", // Firma de uploads Cloudinary (el widget no envía headers de auth)
+    "/api/auth/login",
+    "/api/auth/verify",
+    "/api/mail",
+    "/api/cloudinary/sign",
   ];
 
-  // Verificar si es una ruta pública exacta
   if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // Rutas públicas por método HTTP y patrón
   const isPublicRoute = (() => {
-    // GET productos (individual o lista) - público
-    if (pathname.match(/^\/api\/products(\/[^/]+)?$/) && method === "GET") {
-      return true;
-    }
-
-    // GET categorías (individual o lista) - público
-    if (pathname.match(/^\/api\/categories(\/[^/]+)?$/) && method === "GET") {
-      return true;
-    }
-
-    // POST orders (crear orden) - público para clientes
-    if (pathname === "/api/orders" && method === "POST") {
-      return true;
-    }
-
-    // GET order por número - público para clientes
-    if (pathname.match(/^\/api\/orders\/number\/[^/]+$/) && method === "GET") {
-      return true;
-    }
-
-    // GET order details con token - público para clientes (requiere token válido)
-    if (pathname.match(/^\/api\/orders\/details\/\d+$/) && method === "GET") {
-      return true;
-    }
-
+    if (pathname.match(/^\/api\/products(\/[^/]+)?$/) && method === "GET") return true;
+    if (pathname.match(/^\/api\/categories(\/[^/]+)?$/) && method === "GET") return true;
+    if (pathname === "/api/orders" && method === "POST") return true;
+    if (pathname.match(/^\/api\/orders\/number\/[^/]+$/) && method === "GET") return true;
+    if (pathname.match(/^\/api\/orders\/details\/\d+$/) && method === "GET") return true;
     return false;
   })();
 
@@ -64,9 +87,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Todas las demás rutas de API requieren autenticación admin
   const authHeader = request.headers.get("authorization");
-
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return NextResponse.json(
       { error: "No autorizado. Token requerido." },
@@ -75,7 +96,6 @@ export function proxy(request: NextRequest) {
   }
 
   const token = authHeader.substring(7).trim();
-
   if (!token) {
     return NextResponse.json(
       { error: "No autorizado. Token requerido." },
@@ -83,9 +103,7 @@ export function proxy(request: NextRequest) {
     );
   }
 
-  // Verificar token usando función compatible con Edge Runtime
   const verification = verifyAdminTokenEdge(token);
-
   if (!verification.valid) {
     return NextResponse.json(
       { error: verification.error || "Token inválido o expirado." },
@@ -93,20 +111,21 @@ export function proxy(request: NextRequest) {
     );
   }
 
-  // Token válido, continuar con la request
   return NextResponse.next();
 }
 
-/**
- * Configuración del matcher para optimizar el middleware
- * Solo se ejecuta en rutas de API
- */
 export const config = {
   matcher: [
-    /*
-     * Coincide con todas las rutas de API
-     * El middleware decide internamente cuáles requieren autenticación
-     */
     "/api/:path*",
+    "/",
+    "/admin",
+    "/admin/:path*",
+    "/login",
+    "/products",
+    "/products/:path*",
+    "/orders",
+    "/orders/:path*",
+    "/categories",
+    "/categories/:path*",
   ],
 };

@@ -47,7 +47,7 @@ export default function AutenticacionView() {
     }
 
     if (isTokenValid(token)) {
-      router.replace("/admin");
+      router.replace("/");
       return;
     }
 
@@ -83,7 +83,7 @@ export default function AutenticacionView() {
 
       setStoredToken(data.token);
       toast.success("Sesión iniciada correctamente");
-      router.push("/admin");
+      router.push("/");
       router.refresh();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error al iniciar sesión";
