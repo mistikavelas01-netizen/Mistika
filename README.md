@@ -71,8 +71,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 │   │   └── auth/          # Authentication modules
 │   ├── store/             # Redux store
 │   └── views/             # Page views
-└── middleware.ts          # Next.js middleware for auth
+└── proxy.ts               # Next.js proxy (subdominio admin + auth API)
 ```
+
+## Deploy en Vercel (subdominio admin)
+
+Para que **admin.tudominio.vercel.app** funcione (panel de administración):
+
+1. **Añadir el dominio en Vercel**
+   - En el dashboard: tu proyecto → **Settings** → **Domains**.
+   - Pulsa **Add** e introduce: `admin.mistika-seven.vercel.app` (o tu subdominio).
+   - Acepta; Vercel asignará el mismo deployment a ese dominio.
+
+2. **Variables de entorno en producción**
+   - `NEXT_PUBLIC_SITE_URL` = URL del sitio de ventas (raíz), ej: `https://mistika-seven.vercel.app`.
+   - Así "Ver tienda" desde el admin redirige al sitio correcto.
+
+Sin añadir el subdominio en **Domains**, Vercel no enruta esa URL a tu proyecto y verás error de página.
 
 ## Learn More
 

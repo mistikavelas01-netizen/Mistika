@@ -106,8 +106,8 @@ export async function PUT(
       body.status !== currentOrder.status &&
       statusesToNotify.includes(body.status)
     ) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      const orderUrl = `${baseUrl}/orders/${updated!.orderNumber}`;
+      const { getAppBaseUrl } = await import("@/lib/app-url");
+      const orderUrl = `${getAppBaseUrl()}/orders/${updated!.orderNumber}`;
       const emailPayload: OrderStatusPayload = {
         name: currentOrder.customerName,
         orderNumber: updated!.orderNumber,

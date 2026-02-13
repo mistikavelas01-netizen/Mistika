@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { categoriesRepo, productsRepo, toApiEntity } from "@/firebase/repos";
+import { categoriesRepo, toApiEntity } from "@/firebase/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 export async function GET(
@@ -109,18 +109,7 @@ export async function DELETE(
       );
     }
 
-    const productsInCategory = await productsRepo.where("categoryId", "==", id);
-    if (productsInCategory.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `No se puede eliminar la categoría porque tiene ${productsInCategory.length} producto(s) asignado(s)`,
-        },
-        { status: 400 }
-      );
-    }
-
-    await categoriesRepo.remove(id);
+    await categoriesRepo.update(id, { isActive: false });
 
     return NextResponse.json({
       success: true,

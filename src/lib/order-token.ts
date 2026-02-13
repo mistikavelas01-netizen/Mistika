@@ -1,5 +1,6 @@
 import "server-only";
 import crypto from "crypto";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 const ORDER_TOKEN_SECRET = process.env.JWT_SECRET;
 
@@ -36,6 +37,6 @@ export function verifyOrderToken(orderId: string, token: string): boolean {
  */
 export function generateOrderDetailUrl(orderId: string, orderNumber: string, baseUrl?: string): string {
   const token = generateOrderToken(orderId);
-  const url = baseUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const url = baseUrl ?? getAppBaseUrl();
   return `${url}/orders/details/${orderId}?token=${token}&orderNumber=${orderNumber}`;
 }

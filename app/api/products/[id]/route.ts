@@ -116,7 +116,7 @@ export async function DELETE(
       );
     }
 
-    await productsRepo.remove(id);
+    await productsRepo.update(id, { isActive: false });
 
     return NextResponse.json({
       success: true,
