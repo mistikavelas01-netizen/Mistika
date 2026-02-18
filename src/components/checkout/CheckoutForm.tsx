@@ -158,16 +158,19 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
 
   const isLoadingOrRedirecting = isCreatingDraft || isCreatingPreference || isRedirecting;
 
+  // Mismo modal, solo cambia el contenido: sin overlay que se superponga
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center py-12 px-4">
+        <Loader2 size={40} className="animate-spin text-blue-600" aria-hidden="true" />
+        <p className="mt-4 text-sm font-medium text-black/80">Redirigiendo a Mercado Pago…</p>
+        <p className="mt-1 text-xs text-black/50">No cierres esta ventana</p>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="relative space-y-6">
-      {/* Overlay: no vaciar carrito; mostrar "Redirigiendo..." hasta que se haga el redirect */}
-      {isRedirecting && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/95 backdrop-blur-sm">
-          <Loader2 size={40} className="animate-spin text-blue-600" aria-hidden="true" />
-          <p className="mt-4 text-sm font-medium text-black/80">Redirigiendo a Mercado Pago…</p>
-          <p className="mt-1 text-xs text-black/50">No cierres esta ventana</p>
-        </div>
-      )}
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Contact Information */}
       <div className="overflow-hidden rounded-xl border border-black/10">
         <div className="flex items-center gap-3 border-b border-black/10 bg-black/5 px-4 py-3">
