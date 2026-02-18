@@ -11,6 +11,7 @@ import {
   Shield,
   ExternalLink,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { useCreateCheckoutDraftMutation, useCreateMercadoPagoPreferenceMutation } from "@/store/features/orders/ordersApi";
 import { useCart } from "@/context/cart-context";
@@ -40,10 +41,11 @@ const shippingOptions = [
 
 export function CheckoutForm({ totalPrice, onClose }: Props) {
   const router = useRouter();
-  const { cart, clearCart } = useCart();
+  const { cart } = useCart();
   const [createDraft, { isLoading: isCreatingDraft }] = useCreateCheckoutDraftMutation();
   const [createPreference, { isLoading: isCreatingPreference }] =
     useCreateMercadoPagoPreferenceMutation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -76,6 +78,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRedirecting) return;
 
     try {
       const orderData: OrderInput = {
@@ -103,9 +106,8 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
       const draftResult = await createDraft(orderData).unwrap();
 
       if (draftResult.success && draftResult.data?.id) {
-        clearCart();
-        onClose();
         const draftId = draftResult.data.id;
+        setIsRedirecting(true);
 
         try {
           const prefResult = await createPreference({
@@ -113,7 +115,6 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
             payer: { email: formData.customerEmail, name: formData.customerName },
           }).unwrap();
 
-          // En localhost (o con NEXT_PUBLIC_MERCADOPAGO_USE_SANDBOX) usar sandbox para tarjetas de prueba
           const forceSandbox = typeof window !== "undefined" && process.env.NEXT_PUBLIC_MERCADOPAGO_USE_SANDBOX === "true";
           const isLocalhost =
             typeof window !== "undefined" &&
@@ -134,16 +135,17 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
             }
             if (!isSandboxUrl && useSandbox) {
               console.warn(
-                "[Checkout] Queríamos sandbox pero la API no devolvió sandbox_init_point. Las tarjetas de prueba pueden fallar. Revisa que MERCADOPAGO_ACCESS_TOKEN sea de Credenciales de prueba."
+                "[Checkout] Queríamos sandbox pero la API no devolvió sandbox_init_point. Revisa MERCADOPAGO_ACCESS_TOKEN (Credenciales de prueba)."
               );
             }
-            toast.success("Redirigiendo a Mercado Pago...");
+            toast.success("Redirigiendo a Mercado Pago…");
             window.location.assign(initPoint);
             return;
           }
         } catch (prefError) {
           console.warn("[Checkout] Mercado Pago preference failed:", prefError);
           toast.error("No se pudo conectar con Mercado Pago. Intenta de nuevo.");
+          setIsRedirecting(false);
         }
 
         router.push("/cart");
@@ -154,8 +156,18 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
     }
   };
 
+  const isLoadingOrRedirecting = isCreatingDraft || isCreatingPreference || isRedirecting;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="relative space-y-6">
+      {/* Overlay: no vaciar carrito; mostrar "Redirigiendo..." hasta que se haga el redirect */}
+      {isRedirecting && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/95 backdrop-blur-sm">
+          <Loader2 size={40} className="animate-spin text-blue-600" aria-hidden="true" />
+          <p className="mt-4 text-sm font-medium text-black/80">Redirigiendo a Mercado Pago…</p>
+          <p className="mt-1 text-xs text-black/50">No cierres esta ventana</p>
+        </div>
+      )}
       {/* Contact Information */}
       <div className="overflow-hidden rounded-xl border border-black/10">
         <div className="flex items-center gap-3 border-b border-black/10 bg-black/5 px-4 py-3">
@@ -434,11 +446,14 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
         </button>
         <button
           type="submit"
-          disabled={isCreatingDraft || isCreatingPreference}
+          disabled={isLoadingOrRedirecting}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isCreatingDraft || isCreatingPreference ? (
-            "Procesando..."
+          {isLoadingOrRedirecting ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              {isRedirecting ? "Redirigiendo…" : "Procesando…"}
+            </>
           ) : (
             <>
               Pagar con Mercado Pago

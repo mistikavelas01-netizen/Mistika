@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getMercadoPagoPayment } from "@/lib/mercadopago/get-payment";
-import { orderDraftsRepo } from "@/firebase/repos";
 import { isMercadoPagoConfigured } from "@/lib/mercadopago/client";
-import { createOrderFromDraft } from "@/lib/order/create-order-from-draft";
+import { processPaymentResult } from "@/lib/mercadopago/process-payment-result";
 
 const WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+const WEBHOOK_LOG_PREFIX = "[MP Webhook]";
 
-/**
- * Valida la firma x-signature del webhook (según documentación MP).
- * Solo aplica cuando MERCADOPAGO_WEBHOOK_SECRET está configurado.
- */
 function validateWebhookSignature(
   xSignature: string | null,
   xRequestId: string | null,
@@ -36,33 +32,15 @@ function validateWebhookSignature(
 }
 
 /**
- * Mapeo de estados de Mercado Pago a nuestro PaymentStatus
- */
-const MP_STATUS_TO_PAYMENT_STATUS: Record<string, "paid" | "pending" | "failed" | "refunded"> = {
-  approved: "paid",
-  pending: "pending",
-  in_process: "pending",
-  in_mediation: "pending",
-  in_collection: "pending",
-  rejected: "failed",
-  cancelled: "failed",
-  refunded: "refunded",
-  charged_back: "refunded",
-};
-
-/**
  * POST /api/webhooks/mercadopago
  *
- * Mercado Pago envía notificaciones con:
- * - topic: payment | merchant_order
- * - id: payment_id o merchant_order_id (depende del topic)
+ * topic: payment | payments | merchant_order
+ * data.id: payment_id o merchant_order_id
  *
- * Para topic=payment, consultamos GET /v1/payments/{id} para obtener el pago completo.
- * Aplicamos idempotencia: si mp_payment_id ya fue procesado para esa orden, no duplicamos.
+ * Consultamos el recurso en MP (GET /v1/payments/{id}), actualizamos CheckoutOrder y PaymentAttempt
+ * con idempotencia. Si status approved, creamos la orden desde el draft.
  */
 export async function POST(request: NextRequest) {
-  const WEBHOOK_LOG_PREFIX = "[MP Webhook]";
-
   try {
     if (!isMercadoPagoConfigured()) {
       console.warn(`${WEBHOOK_LOG_PREFIX} MERCADOPAGO_ACCESS_TOKEN not configured`);
@@ -109,11 +87,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
         }
       } else {
-        console.warn(`${WEBHOOK_LOG_PREFIX} WEBHOOK_SECRET set but x-signature missing (notification_url flow?)`);
+        console.warn(`${WEBHOOK_LOG_PREFIX} WEBHOOK_SECRET set but x-signature missing`);
       }
     }
 
-    console.log(`${WEBHOOK_LOG_PREFIX} Received topic=${topic} id=${resourceId} raw=${rawBody.substring(0, 500)}`);
+    console.log(
+      `${WEBHOOK_LOG_PREFIX} topic=${topic} resourceId=${resourceId} raw=${rawBody.substring(0, 400)}`
+    );
 
     if (topic === "payment" || topic === "payments") {
       const paymentId = String(resourceId);
@@ -123,7 +103,6 @@ export async function POST(request: NextRequest) {
       }
 
       let mpPayment: Awaited<ReturnType<typeof getMercadoPagoPayment>>;
-
       try {
         mpPayment = await getMercadoPagoPayment(paymentId);
       } catch (err) {
@@ -131,34 +110,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
-      const draftId = mpPayment?.external_reference;
-      const status = mpPayment?.status ?? "";
+      const result = await processPaymentResult(mpPayment as Parameters<typeof processPaymentResult>[0], {
+        auditLogPrefix: WEBHOOK_LOG_PREFIX,
+      });
 
-      if (!draftId) {
-        console.warn(`${WEBHOOK_LOG_PREFIX} Payment ${paymentId} has no external_reference`);
-        return NextResponse.json({ received: true }, { status: 200 });
-      }
-
-      const draft = await orderDraftsRepo.getById(draftId);
-      if (!draft) {
-        console.warn(`${WEBHOOK_LOG_PREFIX} Draft not found: ${draftId}`);
-        return NextResponse.json({ received: true }, { status: 200 });
-      }
-
-      const paymentStatus = MP_STATUS_TO_PAYMENT_STATUS[status] ?? "pending";
-
-      if (paymentStatus === "paid") {
-        if (draft.status === "converted") {
-          console.log(`${WEBHOOK_LOG_PREFIX} Idempotency: draft ${draftId} already converted`);
-          return NextResponse.json({ received: true }, { status: 200 });
-        }
-        const mpPreferenceId = mpPayment?.metadata?.preference_id ?? undefined;
-        const created = await createOrderFromDraft(draft, paymentId, mpPreferenceId);
-        if (created) {
-          console.log(`${WEBHOOK_LOG_PREFIX} Created order ${created.orderId} (${created.orderNumber}) from draft ${draftId}`);
-        } else {
-          console.error(`${WEBHOOK_LOG_PREFIX} Failed to create order from draft ${draftId}`);
-        }
+      if (result.alreadyProcessed) {
+        console.log(`${WEBHOOK_LOG_PREFIX} Idempotency: payment ${paymentId} already processed`);
+      } else if (result.status === "APPROVED" && result.orderId) {
+        console.log(
+          `${WEBHOOK_LOG_PREFIX} Order ${result.orderId} (${result.orderNumber}) confirmed for payment ${paymentId}`
+        );
       }
     } else if (topic === "merchant_order") {
       console.log(`${WEBHOOK_LOG_PREFIX} merchant_order not implemented, skipping`);

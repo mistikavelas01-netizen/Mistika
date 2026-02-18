@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPreferenceClient, isMercadoPagoConfigured } from "@/lib/mercadopago/client";
-import { orderDraftsRepo } from "@/firebase/repos";
+import { orderDraftsRepo, checkoutOrdersRepo } from "@/firebase/repos";
 import { getAppBaseUrl } from "@/lib/app-url";
 
 /**
  * POST /api/payments/mercadopago/preference
  *
  * Recibe: draftId (borrador creado antes del pago), payer (opcional)
- * Devuelve: init_point, sandbox_init_point, preferenceId
+ * Crea una orden de checkout (CREATED) en BD, luego la preferencia en MP con external_reference = checkoutOrderId.
+ * Devuelve: init_point, sandbox_init_point, preferenceId, orderId (checkoutOrderId).
  *
- * La orden se crea cuando el webhook confirma el pago aprobado.
+ * back_urls apuntan a /checkout/return (MP añade payment_id, preference_id, status).
+ * La orden final (orders) se crea cuando el webhook o verify confirman approved.
  */
 export async function POST(request: NextRequest) {
   if (!isMercadoPagoConfigured()) {
@@ -48,14 +50,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const items = draft.items.map((i) => ({
-      id: i.productId,
-      title: i.productName || "Producto",
-      quantity: i.quantity,
-      unit_price: i.unitPrice,
-      currency_id: "MXN" as const,
-    }));
-
     const baseUrl = getAppBaseUrl();
     const isAbsoluteUrl = baseUrl.startsWith("http://") || baseUrl.startsWith("https://");
     if (!baseUrl || !isAbsoluteUrl) {
@@ -70,17 +64,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const successUrl = `${baseUrl}/orders/payment/success?draftId=${draftId}`;
-    const failureUrl = `${baseUrl}/orders/payment/failure?draftId=${draftId}`;
-    const pendingUrl = `${baseUrl}/orders/payment/pending?draftId=${draftId}`;
+    // 1) Crear orden de checkout en BD (CREATED) antes de llamar a MP
+    const checkoutOrder = await checkoutOrdersRepo.create({
+      draftId,
+      status: "CREATED",
+      preferenceId: null,
+      initPoint: null,
+      convertedOrderId: null,
+      orderNumber: null,
+      currency: "MXN",
+      totalAmount: draft.totalAmount,
+    });
+    const checkoutOrderId = checkoutOrder._id!;
 
+    const productItems = draft.items.map((i) => ({
+      id: i.productId,
+      title: i.productName || "Producto",
+      quantity: i.quantity,
+      unit_price: i.unitPrice,
+      currency_id: "MXN" as const,
+    }));
+
+    const shippingCost = Number(draft.shippingCost) || 0;
+    const tax = Number(draft.tax) || 0;
+
+    const items = [...productItems];
+    if (shippingCost > 0) {
+      items.push({
+        id: "envio",
+        title: "Envío",
+        quantity: 1,
+        unit_price: shippingCost,
+        currency_id: "MXN" as const,
+      });
+    }
+    if (tax > 0) {
+      items.push({
+        id: "iva",
+        title: "IVA (16%)",
+        quantity: 1,
+        unit_price: tax,
+        currency_id: "MXN" as const,
+      });
+    }
+
+    const returnBase = `${baseUrl}/checkout/return`;
     const preferenceBody = {
       items,
-      external_reference: draftId,
+      external_reference: checkoutOrderId,
       back_urls: {
-        success: successUrl,
-        failure: failureUrl,
-        pending: pendingUrl,
+        success: returnBase,
+        failure: returnBase,
+        pending: returnBase,
       },
       auto_return: "approved" as const,
       payer: body.payer
@@ -93,29 +128,34 @@ export async function POST(request: NextRequest) {
             name: draft.customerName,
           },
       notification_url: `${baseUrl}/api/webhooks/mercadopago?source_news=webhooks`,
+      binary_mode: true,
     };
 
     const client = getPreferenceClient();
     const result = await client.create({ body: preferenceBody });
 
-    console.log("[MP Preference] Resultado:", JSON.stringify(result, null, 2));
-
-    const preferenceId = result?.id;
-    const initPoint = result?.init_point;
+    const preferenceId = result?.id ?? null;
+    const initPoint = result?.init_point ?? null;
     const sandboxInitPoint = result?.sandbox_init_point ?? null;
-
-    // Diagnóstico: con credenciales de prueba MP suele devolver sandbox_init_point
-    if (!sandboxInitPoint) {
-      console.warn(
-        "[MP Preference] sandbox_init_point no viene en la respuesta. Si usas tarjetas de prueba, asegúrate de usar Credenciales de prueba en MERCADOPAGO_ACCESS_TOKEN."
-      );
-    }
 
     if (!preferenceId || !initPoint) {
       console.error("[MP Preference] Invalid response:", result);
+      await checkoutOrdersRepo.update(checkoutOrderId, { status: "FAILED" });
       return NextResponse.json(
         { success: false, error: "Error al crear la preferencia en Mercado Pago" },
         { status: 500 }
+      );
+    }
+
+    await checkoutOrdersRepo.update(checkoutOrderId, {
+      status: "CHECKOUT_STARTED",
+      preferenceId,
+      initPoint,
+    });
+
+    if (!sandboxInitPoint) {
+      console.warn(
+        "[MP Preference] sandbox_init_point no viene en la respuesta. Si usas tarjetas de prueba, asegúrate de usar Credenciales de prueba en MERCADOPAGO_ACCESS_TOKEN."
       );
     }
 
@@ -125,6 +165,7 @@ export async function POST(request: NextRequest) {
         init_point: initPoint,
         sandbox_init_point: sandboxInitPoint,
         preferenceId,
+        orderId: checkoutOrderId,
       },
     });
   } catch (error) {

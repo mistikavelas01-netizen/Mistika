@@ -7,13 +7,12 @@
 ## 1. Pasos de alto nivel
 
 1. **Borrador creado** → El usuario completa el checkout y se crea un borrador (`order_drafts`) en Firestore. No se crea orden ni se decrementa stock.
-2. **Preferencia MP** → Backend recibe `draftId`, crea preferencia en Mercado Pago con `external_reference=draftId` y devuelve `init_point`.
-3. **Redirección** → El frontend redirige al usuario a `init_point` (Checkout Pro externo).
-4. **Usuario paga** → En MP el usuario paga (tarjeta, OXXO, etc.).
-5. **Webhook** → MP envía POST a `/webhooks/mercadopago` con `payment_id`.
-6. **Server-to-server** → Backend consulta `GET /v1/payments/{id}` a MP para obtener el pago completo.
-7. **Orden creada** → Si `status=approved`, se crea la **orden** desde el borrador (decrementa stock, crea order + order_items). La orden solo existe cuando el pago fue exitoso.
-8. **back_urls** → Usuario es redirigido a success/failure/pending. La página success hace polling a `/api/checkout/draft/{draftId}/status` hasta que el webhook haya creado la orden.
+2. **Orden de checkout (CREATED)** → Backend crea un registro `checkout_orders` con estado CREATED y `draftId`.
+3. **Preferencia MP** → Backend crea preferencia en MP con `external_reference=checkoutOrderId`, `back_urls` a `/checkout/return`, `notification_url` al webhook. Guarda `preferenceId` e `init_point` en la orden de checkout (estado CHECKOUT_STARTED) y devuelve `init_point`.
+4. **Redirección** → El frontend **no vacía el carrito**; muestra overlay "Redirigiendo a Mercado Pago…" y redirige a `init_point`.
+5. **Usuario paga** → En MP el usuario paga (tarjeta, OXXO, etc.).
+6. **Webhook** → MP envía POST a `/api/webhooks/mercadopago`. Backend consulta `GET /v1/payments/{id}`, actualiza `checkout_orders` y `payment_attempts` (idempotencia). Si `approved`, crea la orden desde el borrador.
+7. **Retorno** → Usuario vuelve a `/checkout/return?payment_id=...&preference_id=...`. La página llama a **GET /api/payments/mercadopago/verify**, que consulta el estado real en MP y actualiza BD. Solo si el verify devuelve **APPROVED** se vacía el carrito y se muestra éxito.
 
 ---
 
@@ -162,11 +161,17 @@
 |---------|-------------|
 | `src/lib/mercadopago/client.ts` | Cliente MP (Preference, Payment) |
 | `src/lib/mercadopago/get-payment.ts` | Consulta pago por ID (server-to-server) |
-| `app/api/payments/mercadopago/preference/route.ts` | POST crear preferencia |
-| `app/api/webhooks/mercadopago/route.ts` | POST webhook handler |
-| `app/(webapp)/orders/payment/[[...status]]/page.tsx` | Páginas success/failure/pending |
-| `src/firebase/repos.ts` | OrderEntity: mpPreferenceId, mpPaymentId, mpWebhookLogs |
-| `src/components/checkout/CheckoutForm.tsx` | Flujo: orden → preferencia → redirect init_point |
+| `src/lib/mercadopago/map-status.ts` | Mapeo estados MP → CheckoutOrderStatus |
+| `src/lib/mercadopago/process-payment-result.ts` | Actualiza CheckoutOrder + PaymentAttempt, idempotencia, crea orden si approved |
+| `app/api/payments/mercadopago/preference/route.ts` | POST: crea CheckoutOrder (CREATED), preferencia MP, devuelve init_point |
+| `app/api/payments/mercadopago/verify/route.ts` | GET: verifica pago en MP, actualiza BD, devuelve status/orderId/orderNumber/canRetry |
+| `app/api/webhooks/mercadopago/route.ts` | POST webhook; idempotencia; procesa con processPaymentResult |
+| `app/(webapp)/checkout/return/page.tsx` | Página de retorno: llama verify, render por status, vacía carrito solo si APPROVED |
+| `app/(webapp)/orders/payment/[[...status]]/page.tsx` | Redirige a `/checkout/return` (compatibilidad) |
+| `src/firebase/repos.ts` | CheckoutOrderEntity, PaymentAttemptEntity, ordersRepo, orderDraftsRepo |
+| `src/components/checkout/CheckoutForm.tsx` | No vacía carrito al pagar; overlay "Redirigiendo…"; redirect con init_point |
+
+Ver también **docs/CHECKOUT_PRO_FLOW.md** para flujo, estados y pruebas.
 
 ---
 

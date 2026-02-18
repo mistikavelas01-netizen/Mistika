@@ -32,7 +32,44 @@ export const COLLECTIONS = {
   ORDERS: "orders",
   ORDER_ITEMS: "order_items",
   ORDER_DRAFTS: "order_drafts",
+  CHECKOUT_ORDERS: "checkout_orders",
+  PAYMENT_ATTEMPTS: "payment_attempts",
 } as const;
+
+/** Estados del flujo de pago (Checkout Pro) */
+export type CheckoutOrderStatus =
+  | "CREATED"
+  | "CHECKOUT_STARTED"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "EXPIRED"
+  | "FAILED";
+
+/** Orden de checkout: se crea al generar la preferencia MP; external_reference = este id */
+export interface CheckoutOrderEntity extends FirebaseEntity {
+  draftId: string;
+  status: CheckoutOrderStatus;
+  preferenceId: string | null;
+  initPoint: string | null;
+  /** ID de la orden final (orders) cuando status = APPROVED */
+  convertedOrderId: string | null;
+  orderNumber: string | null;
+  currency: string;
+  totalAmount: number;
+}
+
+/** Intento de pago (MP); idempotencia por paymentId */
+export interface PaymentAttemptEntity extends FirebaseEntity {
+  checkoutOrderId: string;
+  orderId: string | null;
+  preferenceId: string | null;
+  paymentId: string;
+  merchantOrderId: string | null;
+  status: string;
+  raw: Record<string, unknown> | null;
+}
 
 // Entity types for Firestore (use string ids and numbers for decimals/dates as stored)
 export interface AdminEntity extends FirebaseEntity {
@@ -144,3 +181,5 @@ export const productsRepo = new FirebaseRepository<ProductEntity>(COLLECTIONS.PR
 export const ordersRepo = new FirebaseRepository<OrderEntity>(COLLECTIONS.ORDERS);
 export const orderItemsRepo = new FirebaseRepository<OrderItemEntity>(COLLECTIONS.ORDER_ITEMS);
 export const orderDraftsRepo = new FirebaseRepository<OrderDraftEntity>(COLLECTIONS.ORDER_DRAFTS);
+export const checkoutOrdersRepo = new FirebaseRepository<CheckoutOrderEntity>(COLLECTIONS.CHECKOUT_ORDERS);
+export const paymentAttemptsRepo = new FirebaseRepository<PaymentAttemptEntity>(COLLECTIONS.PAYMENT_ATTEMPTS);
