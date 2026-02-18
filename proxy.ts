@@ -80,6 +80,12 @@ export function proxy(request: NextRequest) {
     if (pathname === "/api/orders" && method === "POST") return true;
     if (pathname.match(/^\/api\/orders\/number\/[^/]+$/) && method === "GET") return true;
     if (pathname.match(/^\/api\/orders\/details\/\d+$/) && method === "GET") return true;
+    // Checkout y pagos: cualquier usuario puede comprar sin token admin
+    if (pathname === "/api/checkout/draft" && method === "POST") return true;
+    if (pathname.match(/^\/api\/checkout\/draft\/[^/]+\/status$/) && method === "GET") return true;
+    if (pathname === "/api/payments/mercadopago/preference" && method === "POST") return true;
+    // Webhook de Mercado Pago (lo llama MP, sin token)
+    if (pathname === "/api/webhooks/mercadopago" && method === "POST") return true;
     return false;
   })();
 

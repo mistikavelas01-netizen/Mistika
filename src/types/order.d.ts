@@ -77,6 +77,12 @@ declare global {
     id: string;
     orderNumber: string;
     status: OrderStatus;
+    /** Mercado Pago preference ID */
+    mpPreferenceId?: string | null;
+    /** Mercado Pago payment ID (para idempotencia) */
+    mpPaymentId?: string | null;
+    externalReference?: string | null;
+    currency?: string | null;
     totalAmount: number;
     subtotal: number;
     shippingCost: number;

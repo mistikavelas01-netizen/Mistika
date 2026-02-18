@@ -114,11 +114,12 @@ export async function PUT(
         status: body.status as "processing" | "shipped" | "delivered",
         orderUrl,
       };
-      sendMail({
-        type: "order-status",
-        to: currentOrder.customerEmail,
-        payload: emailPayload,
-      }).catch((err) => console.error("[Orders API] Failed to send status email:", err));
+      // Envío de correo deshabilitado para no gastar créditos (Resend)
+      // sendMail({
+      //   type: "order-status",
+      //   to: currentOrder.customerEmail,
+      //   payload: emailPayload,
+      // }).catch((err) => console.error("[Orders API] Failed to send status email:", err));
     }
 
     return NextResponse.json({ success: true, data });

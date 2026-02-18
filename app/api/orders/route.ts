@@ -272,24 +272,25 @@ export async function POST(request: NextRequest) {
       const { generateOrderDetailUrl } = await import("@/lib/order-token");
       const orderUrl = generateOrderDetailUrl(orderId, createdOrder.orderNumber);
 
-      await sendMail({
-        type: "order-confirmation",
-        to: createdOrder.customerEmail,
-        payload: {
-          name: createdOrder.customerName,
-          orderNumber: createdOrder.orderNumber,
-          orderDate: formatDate(createdOrder.createdAt ?? Date.now()),
-          totalAmount: Number(createdOrder.totalAmount),
-          items: orderItemsForCreate.map((item) => ({
-            name: item.productName,
-            quantity: item.quantity,
-            price: Number(item.unitPrice),
-          })),
-          shippingAddress,
-          orderUrl,
-        },
-      });
-      console.log(`[Orders] Order confirmation email sent to ${createdOrder.customerEmail}`);
+      // Envío de correo deshabilitado para no gastar créditos (Resend)
+      // await sendMail({
+      //   type: "order-confirmation",
+      //   to: createdOrder.customerEmail,
+      //   payload: {
+      //     name: createdOrder.customerName,
+      //     orderNumber: createdOrder.orderNumber,
+      //     orderDate: formatDate(createdOrder.createdAt ?? Date.now()),
+      //     totalAmount: Number(createdOrder.totalAmount),
+      //     items: orderItemsForCreate.map((item) => ({
+      //       name: item.productName,
+      //       quantity: item.quantity,
+      //       price: Number(item.unitPrice),
+      //     })),
+      //     shippingAddress,
+      //     orderUrl,
+      //   },
+      // });
+      // console.log(`[Orders] Order confirmation email sent to ${createdOrder.customerEmail}`);
     } catch (emailError) {
       console.error("[Orders] Failed to send order confirmation email:", emailError);
     }

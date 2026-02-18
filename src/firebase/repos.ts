@@ -31,6 +31,7 @@ export const COLLECTIONS = {
   PRODUCTS: "products",
   ORDERS: "orders",
   ORDER_ITEMS: "order_items",
+  ORDER_DRAFTS: "order_drafts",
 } as const;
 
 // Entity types for Firestore (use string ids and numbers for decimals/dates as stored)
@@ -94,6 +95,46 @@ export interface OrderEntity extends FirebaseEntity {
   paymentMethod?: string | null;
   paymentStatus: string;
   notes?: string | null;
+  /** Mercado Pago preference ID (Checkout Pro) */
+  mpPreferenceId?: string | null;
+  /** Mercado Pago payment ID - usado para idempotencia en webhooks */
+  mpPaymentId?: string | null;
+  /** Referencia externa enviada a MP (normalmente orderId) */
+  externalReference?: string | null;
+  /** Moneda (ej. MXN) */
+  currency?: string | null;
+  /** Logs de webhooks para auditoría (payload raw) */
+  mpWebhookLogs?: { topic: string; paymentId?: string; timestamp: number }[];
+}
+
+/** Borrador de orden: se crea antes del pago y se convierte en Order cuando MP aprueba */
+export interface OrderDraftEntity extends FirebaseEntity {
+  status: "pending" | "converted" | "expired";
+  /** ID de la orden creada tras pago exitoso */
+  convertedOrderId?: string | null;
+  orderNumber?: string | null;
+  totalAmount: number;
+  subtotal: number;
+  shippingCost: number;
+  tax: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  shippingStreet: string;
+  shippingCity: string;
+  shippingState: string;
+  shippingZip: string;
+  shippingCountry: string;
+  billingStreet?: string | null;
+  billingCity?: string | null;
+  billingState?: string | null;
+  billingZip?: string | null;
+  billingCountry?: string | null;
+  shippingMethod: string;
+  paymentMethod?: string | null;
+  notes?: string | null;
+  /** Items del borrador (productId, quantity, unitPrice, totalPrice, productName) */
+  items: { productId: string; quantity: number; unitPrice: number; totalPrice: number; productName: string }[];
 }
 
 // Repository instances
@@ -102,3 +143,4 @@ export const categoriesRepo = new FirebaseRepository<CategoryEntity>(COLLECTIONS
 export const productsRepo = new FirebaseRepository<ProductEntity>(COLLECTIONS.PRODUCTS);
 export const ordersRepo = new FirebaseRepository<OrderEntity>(COLLECTIONS.ORDERS);
 export const orderItemsRepo = new FirebaseRepository<OrderItemEntity>(COLLECTIONS.ORDER_ITEMS);
+export const orderDraftsRepo = new FirebaseRepository<OrderDraftEntity>(COLLECTIONS.ORDER_DRAFTS);

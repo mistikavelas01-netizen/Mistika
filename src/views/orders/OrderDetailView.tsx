@@ -146,7 +146,7 @@ export function OrderDetailView() {
           </p>
         </motion.div>
 
-        {/* Success Message */}
+        {/* Success / Status Message */}
         {order.status === "pending" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -163,11 +163,14 @@ export function OrderDetailView() {
               </div>
               <div>
                 <h3 className="mb-2 text-lg font-semibold text-green-900">
-                  ¡Pedido recibido!
+                  {order.paymentStatus === "paid"
+                    ? "¡Pago confirmado! Pedido en proceso"
+                    : "¡Pedido recibido!"}
                 </h3>
                 <p className="text-sm text-green-800">
-                  Tu pedido ha sido recibido y está siendo procesado. Te
-                  enviaremos un correo de confirmación a {order.customerEmail}
+                  {order.paymentStatus === "paid"
+                    ? "Tu pago fue procesado correctamente. Estamos preparando tu pedido."
+                    : `Tu pedido ha sido recibido${order.paymentStatus === "pending" ? ". Completa el pago en Mercado Pago para continuar." : "."} Te enviaremos un correo de confirmación a ${order.customerEmail}.`}
                 </p>
               </div>
             </div>
