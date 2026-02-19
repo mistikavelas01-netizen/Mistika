@@ -118,7 +118,7 @@ export function CategoryFormView() {
     return (
       <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-20">
+          <div className="flex min-h-[480px] flex-col items-center justify-center py-20">
             <div className="text-center">
               <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-black/10 border-t-black" />
               <p className="text-black/60">Cargando categoría...</p>

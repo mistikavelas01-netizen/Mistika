@@ -317,7 +317,7 @@ export function DashboardView() {
               </div>
 
               {isLoadingOrders ? (
-                <div className="p-8 text-center text-black/50">Cargando pedidos...</div>
+                <div className="flex min-h-[240px] flex-col items-center justify-center p-8 text-center text-black/50">Cargando pedidos...</div>
               ) : recentOrders.length === 0 ? (
                 <div className="p-8 text-center text-black/50">No hay pedidos aún</div>
               ) : (

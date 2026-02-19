@@ -210,7 +210,7 @@ export function OrdersAdminView() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex min-h-[360px] flex-col items-center justify-center py-20">
             <div className="text-center">
               <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-black/10 border-t-black" />
               <p className="text-black/60">Cargando pedidos...</p>
