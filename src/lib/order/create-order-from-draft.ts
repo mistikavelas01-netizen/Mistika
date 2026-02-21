@@ -6,6 +6,9 @@ import {
   orderDraftsRepo,
   type OrderDraftEntity,
 } from "@/firebase/repos";
+import { generateOrderDetailUrl } from "@/lib/order-token";
+import { sendMail } from "@/mail/sendMail";
+import type { OrderConfirmationPayload } from "@/mail/types";
 
 /**
  * Crea una orden desde un borrador cuando el pago fue aprobado por Mercado Pago.
@@ -110,6 +113,49 @@ export async function createOrderFromDraft(
         stock: Math.max(0, product.stock - entry.quantity),
       });
     }
+  }
+
+  try {
+    const formatDate = (date: Date | number | string) =>
+      new Date(date).toLocaleDateString("es-MX", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    const shippingAddress = [
+      createdOrder.shippingStreet,
+      `${createdOrder.shippingCity}, ${createdOrder.shippingState} ${createdOrder.shippingZip}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const orderUrl = generateOrderDetailUrl(orderId, createdOrder.orderNumber);
+    const emailPayload: OrderConfirmationPayload = {
+      name: createdOrder.customerName,
+      orderNumber: createdOrder.orderNumber,
+      orderDate: formatDate(createdOrder.createdAt ?? Date.now()),
+      totalAmount: Number(createdOrder.totalAmount),
+      items: draft.items.map((item) => ({
+        name: item.productName,
+        quantity: item.quantity,
+        price: Number(item.unitPrice),
+      })),
+      shippingAddress,
+      orderUrl,
+    };
+
+    const result = await sendMail({
+      type: "order-confirmation",
+      to: createdOrder.customerEmail,
+      payload: emailPayload,
+    });
+
+    if (!result.ok) {
+      console.error("[Orders] Failed to send confirmation email:", result.error);
+    }
+  } catch (error) {
+    console.error("[Orders] Confirmation email error:", error);
   }
 
   await orderDraftsRepo.update(draft._id!, {
