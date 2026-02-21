@@ -40,8 +40,6 @@ type SortOption = "newest" | "price_asc" | "price_desc";
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "newest", label: "Más recientes" },
-  { value: "price_desc", label: "Mayor precio" },
-  { value: "price_asc", label: "Menor precio" },
 ];
 
 export function LandingPageView() {

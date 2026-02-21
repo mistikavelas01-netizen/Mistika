@@ -2,41 +2,61 @@ import "server-only";
 import crypto from "crypto";
 import { getAppBaseUrl } from "@/lib/app-url";
 
+export const runtime = "nodejs";
+
 const ORDER_TOKEN_SECRET = process.env.JWT_SECRET;
 
 if (!ORDER_TOKEN_SECRET) {
   throw new Error("JWT_SECRET must be set in environment variables");
 }
 
-/**
- * Genera un token único vinculado al ID de la orden (Firebase document id)
- * El token es determinístico: siempre genera el mismo token para el mismo ID
- */
-export function generateOrderToken(orderId: string): string {
-  const data = `${orderId}:${ORDER_TOKEN_SECRET}`;
-  const hash = crypto.createHash("sha256").update(data).digest("hex");
-  return hash.substring(0, 32);
+const EXPIRATION_HOURS = 24;
+
+// Crear firma segura con HMAC
+function createSignature(data: string): string {
+  return crypto
+    .createHmac("sha256", ORDER_TOKEN_SECRET!)
+    .update(data)
+    .digest("hex")
+    .substring(0, 32);
 }
 
-/**
- * Verifica que un token sea válido para un ID de orden específico
- */
-export function verifyOrderToken(orderId: string, token: string): boolean {
-  if (!token || token.length !== 32) {
-    return false;
-  }
-  const expectedToken = generateOrderToken(orderId);
-  return crypto.timingSafeEqual(
-    Buffer.from(token),
-    Buffer.from(expectedToken)
-  );
+// Generar token con expiración
+export function generateOrderToken(orderId: string) {
+  const expiresAt = Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000;
+  const data = `${orderId}:${expiresAt}`;
+  const token = createSignature(data);
+
+  return { token, expiresAt };
 }
 
-/**
- * Genera la URL completa para ver los detalles de una orden con token
- */
-export function generateOrderDetailUrl(orderId: string, orderNumber: string, baseUrl?: string): string {
-  const token = generateOrderToken(orderId);
+// Verificar token
+export function verifyOrderToken(
+  orderId: string,
+  token: string,
+  expiresAt: string
+): boolean {
+  if (!token || token.length !== 32) return false;
+
+  const expirationTime = Number(expiresAt);
+  if (!expirationTime || Date.now() > expirationTime) return false;
+
+  const data = `${orderId}:${expirationTime}`;
+  const expectedToken = createSignature(data);
+
+  return token === expectedToken;
+}
+
+// Generar URL completa para el correo
+export function generateOrderDetailUrl(
+  orderId: string,
+  orderNumber: string,
+  baseUrl?: string
+): string {
+  const { token, expiresAt } = generateOrderToken(orderId);
   const url = baseUrl ?? getAppBaseUrl();
-  return `${url}/orders/details/${orderId}?token=${token}&orderNumber=${orderNumber}`;
+
+  return `${url}/orders/details/${orderId}?token=${encodeURIComponent(
+    token
+  )}&expires=${expiresAt}&orderNumber=${encodeURIComponent(orderNumber)}`;
 }
