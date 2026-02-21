@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendMail } from "@/mail/sendMail";
 import { z } from "zod";
+import { withDependency } from "../_utils/dependencies";
+import { logger } from "../_utils/logger";
+import { withApiRoute } from "../_utils/with-api-route";
 
 /**
  * Validation schemas for each mail type
@@ -72,7 +75,7 @@ const mailRequestSchema = z.discriminatedUnion("type", [
  * POST /api/mail
  * Send transactional email via Resend
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/mail" }, async (request: NextRequest) => {
   try {
     // Parse and validate request body
     const body = await request.json();
@@ -80,7 +83,9 @@ export async function POST(request: NextRequest) {
     const validationResult = mailRequestSchema.safeParse(body);
 
     if (!validationResult.success) {
-      console.error("[Mail API] Validation error:", validationResult.error.issues);
+      logger.warn("mail.validation_failed", {
+        issuesCount: validationResult.error.issues.length,
+      });
       return NextResponse.json(
         {
           ok: false,
@@ -94,10 +99,13 @@ export async function POST(request: NextRequest) {
     const { type, to, payload } = validationResult.data;
 
     // Send email
-    const result = await sendMail({ type, to, payload });
+    const result = await withDependency(
+      { name: "resend", operation: `sendMail:${type}` },
+      () => sendMail({ type, to, payload })
+    );
 
     if (!result.ok) {
-      console.error("[Mail API] Send failed:", result.error);
+      logger.error("mail.send_failed", { error: result.error });
       return NextResponse.json(
         {
           ok: false,
@@ -112,7 +120,7 @@ export async function POST(request: NextRequest) {
       messageId: result.messageId,
     });
   } catch (error) {
-    console.error("[Mail API] Unexpected error:", error);
+    logger.error("mail.unexpected_error", { error });
 
     // Handle JSON parsing errors
     if (error instanceof SyntaxError) {
@@ -133,16 +141,16 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/mail
  * Health check endpoint
  */
-export async function GET() {
+export const GET = withApiRoute({ route: "/api/mail" }, async () => {
   return NextResponse.json({
     service: "Mail API",
     status: "operational",
     supportedTypes: ["welcome", "verify-email", "reset-password", "generic", "order-confirmation"],
   });
-}
+});

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -7,7 +9,7 @@ cloudinary.config({
   api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/cloudinary/sign" }, async (request: NextRequest) => {
   try {
     const body = (await request.json()) as {
       paramsToSign?: Record<string, string | number>;
@@ -28,10 +30,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ signature });
   } catch (error) {
-    console.error("Error signing Cloudinary params:", error);
+    logger.error("cloudinary.sign_failed", { error });
     return NextResponse.json(
       { error: "No se pudo firmar la solicitud de subida" },
       { status: 500 }
     );
   }
-}
+});

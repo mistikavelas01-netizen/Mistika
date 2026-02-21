@@ -206,7 +206,7 @@ export function ProductsAdminView() {
 
         {/* Products List */}
         {isLoading ? (
-          <div className="rounded-2xl border border-black/10 bg-white p-16 text-center">
+          <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-black/10 bg-white p-16 text-center">
             <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-black/10 border-t-black" />
             <p className="text-black/60">Cargando productos...</p>
           </div>

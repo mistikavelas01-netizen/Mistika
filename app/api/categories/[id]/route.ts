@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { categoriesRepo, toApiEntity } from "@/firebase/repos";
+import { categoriesRepo, toApiEntity } from "../../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiRoute(
+  { route: "/api/categories/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
 
@@ -22,18 +23,17 @@ export async function GET(
       data: toApiEntity(category),
     });
   } catch (error) {
-    console.error("Error fetching category:", error);
+    logger.error("categories.fetch_one_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo obtener la categoría" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withApiRoute(
+  { route: "/api/categories/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -83,18 +83,17 @@ export async function PUT(
       data: toApiEntity(updated),
     });
   } catch (error) {
-    console.error("Error updating category:", error);
+    logger.error("categories.update_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo actualizar la categoría" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withApiRoute(
+  { route: "/api/categories/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -116,10 +115,10 @@ export async function DELETE(
       message: "Categoría eliminada correctamente",
     });
   } catch (error) {
-    console.error("Error deleting category:", error);
+    logger.error("categories.delete_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo eliminar la categoría" },
       { status: 500 }
     );
   }
-}
+});

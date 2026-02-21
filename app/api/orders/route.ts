@@ -4,9 +4,11 @@ import {
   orderItemsRepo,
   productsRepo,
   toApiEntity,
-} from "@/firebase/repos";
+} from "../_utils/repos";
 import { sendMail } from "@/mail/sendMail";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { logger } from "../_utils/logger";
+import { withApiRoute } from "../_utils/with-api-route";
 
 async function enrichOrderWithItems(order: Awaited<ReturnType<typeof ordersRepo.getById>>) {
   if (!order) return null;
@@ -31,7 +33,7 @@ async function enrichOrderWithItems(order: Awaited<ReturnType<typeof ordersRepo.
   };
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withApiRoute({ route: "/api/orders" }, async (request: NextRequest) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -71,15 +73,15 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching orders:", error);
+    logger.error("orders.fetch_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudieron obtener los pedidos" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/orders" }, async (request: NextRequest) => {
   try {
     const body = (await request.json()) as OrderInput;
 
@@ -272,26 +274,27 @@ export async function POST(request: NextRequest) {
       const { generateOrderDetailUrl } = await import("@/lib/order-token");
       const orderUrl = generateOrderDetailUrl(orderId, createdOrder.orderNumber);
 
-      await sendMail({
-        type: "order-confirmation",
-        to: createdOrder.customerEmail,
-        payload: {
-          name: createdOrder.customerName,
-          orderNumber: createdOrder.orderNumber,
-          orderDate: formatDate(createdOrder.createdAt ?? Date.now()),
-          totalAmount: Number(createdOrder.totalAmount),
-          items: orderItemsForCreate.map((item) => ({
-            name: item.productName,
-            quantity: item.quantity,
-            price: Number(item.unitPrice),
-          })),
-          shippingAddress,
-          orderUrl,
-        },
-      });
-      console.log(`[Orders] Order confirmation email sent to ${createdOrder.customerEmail}`);
+      // Envío de correo deshabilitado para no gastar créditos (Resend)
+      // await sendMail({
+      //   type: "order-confirmation",
+      //   to: createdOrder.customerEmail,
+      //   payload: {
+      //     name: createdOrder.customerName,
+      //     orderNumber: createdOrder.orderNumber,
+      //     orderDate: formatDate(createdOrder.createdAt ?? Date.now()),
+      //     totalAmount: Number(createdOrder.totalAmount),
+      //     items: orderItemsForCreate.map((item) => ({
+      //       name: item.productName,
+      //       quantity: item.quantity,
+      //       price: Number(item.unitPrice),
+      //     })),
+      //     shippingAddress,
+      //     orderUrl,
+      //   },
+      // });
+      // console.log(`[Orders] Order confirmation email sent to ${createdOrder.customerEmail}`);
     } catch (emailError) {
-      console.error("[Orders] Failed to send order confirmation email:", emailError);
+      logger.error("orders.confirmation_email_failed", { error: emailError });
     }
 
     return NextResponse.json({
@@ -299,10 +302,10 @@ export async function POST(request: NextRequest) {
       data: orderWithItems,
     });
   } catch (error) {
-    console.error("Error creating order:", error);
+    logger.error("orders.create_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo crear el pedido" },
       { status: 500 }
     );
   }
-}
+});

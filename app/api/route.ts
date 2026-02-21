@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { fetchWithObservability } from "./_utils/dependencies";
+import { logger } from "./_utils/logger";
+import { withApiRoute } from "./_utils/with-api-route";
 
 // This is a proxy route that handles all RTK Query requests
 // RTK Query sends requests to /api with endpoint and method in headers
-export async function POST(req: NextRequest) {
+const proxyHandler = async (req: NextRequest) => {
   try {
     const method = req.headers.get("method") || "GET";
     const endpoint = req.headers.get("endpoint") || "";
@@ -14,32 +17,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get the body if it exists
-    let body = null;
+    let body: unknown = null;
     try {
       body = await req.json();
     } catch {
       // No body or invalid JSON, that's okay
     }
 
-    // Get cookies to forward authentication
     const cookies = req.headers.get("cookie") || "";
-
-    // Determine the backend URL
-    // You can use an environment variable for this
     const backendUrl = process.env.BACKEND_URL || "http://localhost:3001";
     const url = `${backendUrl}/${endpoint}`;
 
-    // Forward the request to the backend
-    const response = await fetch(url, {
+    const response = await fetchWithObservability(url, {
       method,
       headers: {
         "Content-Type": "application/json",
         Cookie: cookies,
-        // Forward other relevant headers if needed
       },
       body: body ? JSON.stringify(body) : undefined,
-    });
+    }, "backend");
 
     const data = await response.json();
 
@@ -47,30 +43,24 @@ export async function POST(req: NextRequest) {
       status: response.status,
     });
   } catch (error) {
-    console.error("API Route Error:", error);
+    logger.error("api.proxy_error", { error });
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
     );
   }
-}
+};
+
+export const POST = withApiRoute({ route: "/api" }, proxyHandler);
 
 // Handle GET requests as well
-export async function GET(req: NextRequest) {
-  return POST(req);
-}
+export const GET = withApiRoute({ route: "/api" }, proxyHandler);
 
 // Handle PUT requests
-export async function PUT(req: NextRequest) {
-  return POST(req);
-}
+export const PUT = withApiRoute({ route: "/api" }, proxyHandler);
 
 // Handle DELETE requests
-export async function DELETE(req: NextRequest) {
-  return POST(req);
-}
+export const DELETE = withApiRoute({ route: "/api" }, proxyHandler);
 
 // Handle PATCH requests
-export async function PATCH(req: NextRequest) {
-  return POST(req);
-}
+export const PATCH = withApiRoute({ route: "/api" }, proxyHandler);

@@ -5,8 +5,10 @@ import {
   productsRepo,
   categoriesRepo,
   toApiEntity,
-} from "@/firebase/repos";
+} from "../../../_utils/repos";
 import { verifyOrderToken } from "@/lib/order-token";
+import { logger } from "../../../_utils/logger";
+import { withApiRoute } from "../../../_utils/with-api-route";
 
 async function enrichOrderWithItemsAndCategory(order: Awaited<ReturnType<typeof ordersRepo.getById>>) {
   if (!order) return null;
@@ -40,10 +42,9 @@ async function enrichOrderWithItemsAndCategory(order: Awaited<ReturnType<typeof 
   };
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiRoute(
+  { route: "/api/orders/details/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
 
@@ -79,10 +80,10 @@ export async function GET(
     const data = await enrichOrderWithItemsAndCategory(order);
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error fetching order details:", error);
+    logger.error("orders.details_fetch_failed", { error });
     return NextResponse.json(
       { success: false, error: "Error al obtener los detalles del pedido" },
       { status: 500 }
     );
   }
-}
+});

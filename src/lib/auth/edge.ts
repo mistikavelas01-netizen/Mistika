@@ -35,6 +35,7 @@ export function verifyAdminTokenEdge(token: string): {
   payload?: JwtPayload;
   error?: string;
 } {
+  console.log("verifyAdminTokenEdge", token);
   // Primero verificar el formato básico del JWT
   if (!isValidJwtFormat(token)) {
     return { valid: false, error: "Formato de token inválido" };
@@ -58,6 +59,7 @@ export function verifyAdminTokenEdge(token: string): {
 
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp <= now) {
+    console.error("Token expirado", payload.exp, now);
     return { valid: false, error: "Token expirado" };
   }
 

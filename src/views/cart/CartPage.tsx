@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -16,9 +16,12 @@ import {
   Truck,
   Shield,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useCart } from "@/context/cart-context";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { getProductImageUrl } from "@/constant";
+
+const CHECKOUT_RETURN_TOAST_KEY = "checkout_return_toast";
 
 export function CartPage() {
   const {
@@ -32,6 +35,21 @@ export function CartPage() {
 
   const [showClearModal, setShowClearModal] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? sessionStorage.getItem(CHECKOUT_RETURN_TOAST_KEY) : null;
+      if (!raw) return;
+      sessionStorage.removeItem(CHECKOUT_RETURN_TOAST_KEY);
+      const { type, message } = JSON.parse(raw) as { type?: "error" | "info"; message?: string };
+      if (message) {
+        if (type === "error") toast.error(message);
+        else toast(message, { icon: "ℹ️" });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const handleClearCart = () => {
     clearCart();

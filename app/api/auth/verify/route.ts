@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/auth/server";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 /**
  * GET /api/auth/verify
  * Verifica que el token del usuario sea válido (incluyendo la firma criptográfica)
  * Usado por AdminGuard para verificar autenticación en el cliente
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiRoute({ route: "/api/auth/verify" }, async (request: NextRequest) => {
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -48,6 +50,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    logger.warn("auth.verify_failed", { error });
     return NextResponse.json(
       {
         valid: false,
@@ -56,4 +59,4 @@ export async function GET(request: NextRequest) {
       { status: 401 }
     );
   }
-}
+});

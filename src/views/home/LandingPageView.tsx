@@ -234,7 +234,10 @@ export function LandingPageView() {
         </div>
 
         {isLoading || isFetching ? (
-          <p className="text-sm text-black/60">Cargando productos...</p>
+          <div className="flex min-h-[50vh] flex-col items-center justify-center py-12">
+            <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-black/10 border-t-black" />
+            <p className="text-sm text-black/60">Cargando productos...</p>
+          </div>
         ) : isError ? (
           <ServerError
             title="Error de conexión"

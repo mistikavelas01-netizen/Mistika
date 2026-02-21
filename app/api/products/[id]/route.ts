@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { productsRepo, categoriesRepo, toApiEntity } from "@/firebase/repos";
+import { productsRepo, categoriesRepo, toApiEntity } from "../../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
 import { PLACEHOLDER_IMAGE } from "@/constant";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiRoute(
+  { route: "/api/products/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
 
@@ -28,18 +29,17 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error fetching product:", error);
+    logger.error("products.fetch_one_failed", { error });
     return NextResponse.json(
       { success: false, message: "No se pudo obtener el producto" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withApiRoute(
+  { route: "/api/products/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -90,18 +90,17 @@ export async function PUT(
       },
     });
   } catch (error) {
-    console.error("Error updating product:", error);
+    logger.error("products.update_failed", { error });
     return NextResponse.json(
       { success: false, message: "No se pudo actualizar el producto" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withApiRoute(
+  { route: "/api/products/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -123,10 +122,10 @@ export async function DELETE(
       message: "Producto eliminado correctamente",
     });
   } catch (error) {
-    console.error("Error deleting product:", error);
+    logger.error("products.delete_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo eliminar el producto" },
       { status: 500 }
     );
   }
-}
+});

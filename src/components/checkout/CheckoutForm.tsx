@@ -11,8 +11,9 @@ import {
   Shield,
   ExternalLink,
   FileText,
+  Loader2,
 } from "lucide-react";
-import { useCreateOrderMutation } from "@/store/features/orders/ordersApi";
+import { useCreateCheckoutDraftMutation, useCreateMercadoPagoPreferenceMutation } from "@/store/features/orders/ordersApi";
 import { useCart } from "@/context/cart-context";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -40,9 +41,11 @@ const shippingOptions = [
 
 export function CheckoutForm({ totalPrice, onClose }: Props) {
   const router = useRouter();
-  const { cart, clearCart } = useCart();
-  const [createOrder, { isLoading: isCreatingOrder }] =
-    useCreateOrderMutation();
+  const { cart } = useCart();
+  const [createDraft, { isLoading: isCreatingDraft }] = useCreateCheckoutDraftMutation();
+  const [createPreference, { isLoading: isCreatingPreference }] =
+    useCreateMercadoPagoPreferenceMutation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -75,6 +78,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRedirecting) return;
 
     try {
       const orderData: OrderInput = {
@@ -99,20 +103,71 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
         })),
       };
 
-      const result = await createOrder(orderData).unwrap();
+      const draftResult = await createDraft(orderData).unwrap();
 
-      if (result.success && result.data) {
-        toast.success("¡Pedido creado! Redirigiendo al pago...");
-        clearCart();
-        // In the future, redirect to Mercado Pago here
-        // For now, redirect to order confirmation
-        router.push(`/orders/${result.data.orderNumber}`);
+      if (draftResult.success && draftResult.data?.id) {
+        const draftId = draftResult.data.id;
+        setIsRedirecting(true);
+
+        try {
+          const prefResult = await createPreference({
+            draftId,
+            payer: { email: formData.customerEmail, name: formData.customerName },
+          }).unwrap();
+
+          const forceSandbox = typeof window !== "undefined" && process.env.NEXT_PUBLIC_MERCADOPAGO_USE_SANDBOX === "true";
+          const isLocalhost =
+            typeof window !== "undefined" &&
+            (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+          const useSandbox = forceSandbox || isLocalhost;
+          const initPoint = useSandbox
+            ? prefResult?.data?.sandbox_init_point ?? prefResult?.data?.init_point
+            : prefResult?.data?.init_point ?? prefResult?.data?.sandbox_init_point;
+
+          if (initPoint) {
+            const isSandboxUrl = initPoint.includes("mercadopago");
+            if (typeof console !== "undefined" && console.info) {
+              console.info(
+                "[Checkout] Redirigiendo a Mercado Pago:",
+                isSandboxUrl ? "SANDBOX (pruebas)" : "PRODUCCIÓN",
+                initPoint.substring(0, 60) + "..."
+              );
+            }
+            if (!isSandboxUrl && useSandbox) {
+              console.warn(
+                "[Checkout] Queríamos sandbox pero la API no devolvió sandbox_init_point. Revisa MERCADOPAGO_ACCESS_TOKEN (Credenciales de prueba)."
+              );
+            }
+            toast.success("Redirigiendo a Mercado Pago…");
+            window.location.assign(initPoint);
+            return;
+          }
+        } catch (prefError) {
+          console.warn("[Checkout] Mercado Pago preference failed:", prefError);
+          toast.error("No se pudo conectar con Mercado Pago. Intenta de nuevo.");
+          setIsRedirecting(false);
+        }
+
+        router.push("/cart");
       }
     } catch (error) {
       const message = getApiErrorMessage(error as Parameters<typeof getApiErrorMessage>[0]);
       toast.error(message || "Error al crear el pedido");
     }
   };
+
+  const isLoadingOrRedirecting = isCreatingDraft || isCreatingPreference || isRedirecting;
+
+  // Mismo modal, solo cambia el contenido: sin overlay que se superponga
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center py-12 px-4">
+        <Loader2 size={40} className="animate-spin text-blue-600" aria-hidden="true" />
+        <p className="mt-4 text-sm font-medium text-black/80">Redirigiendo a Mercado Pago…</p>
+        <p className="mt-1 text-xs text-black/50">No cierres esta ventana</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -394,11 +449,14 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
         </button>
         <button
           type="submit"
-          disabled={isCreatingOrder}
+          disabled={isLoadingOrRedirecting}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isCreatingOrder ? (
-            "Procesando..."
+          {isLoadingOrRedirecting ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              {isRedirecting ? "Redirigiendo…" : "Procesando…"}
+            </>
           ) : (
             <>
               Pagar con Mercado Pago

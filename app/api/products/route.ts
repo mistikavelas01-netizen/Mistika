@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { productsRepo, categoriesRepo, toApiEntity } from "@/firebase/repos";
+import { productsRepo, categoriesRepo, toApiEntity } from "../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
 import { PLACEHOLDER_IMAGE } from "@/constant";
+import { logger } from "../_utils/logger";
+import { withApiRoute } from "../_utils/with-api-route";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiRoute({ route: "/api/products" }, async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -60,22 +62,20 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching products:", error);
+    logger.error("products.fetch_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudieron obtener los productos" },
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/products" }, async (request: NextRequest) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
   try {
     const body = (await request.json()) as ProductInput;
-
-    console.log({body});
 
     let categoryId = body.categoryId;
     if (!categoryId && body.category) {
@@ -121,10 +121,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error creating product:", error);
+    logger.error("products.create_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo crear el producto" },
       { status: 500 },
     );
   }
-}
+});

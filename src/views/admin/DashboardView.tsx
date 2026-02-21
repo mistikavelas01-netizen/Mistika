@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Eye,
   Home,
+  Webhook,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
@@ -317,7 +318,7 @@ export function DashboardView() {
               </div>
 
               {isLoadingOrders ? (
-                <div className="p-8 text-center text-black/50">Cargando pedidos...</div>
+                <div className="flex min-h-[240px] flex-col items-center justify-center p-8 text-center text-black/50">Cargando pedidos...</div>
               ) : recentOrders.length === 0 ? (
                 <div className="p-8 text-center text-black/50">No hay pedidos aún</div>
               ) : (
@@ -441,6 +442,26 @@ export function DashboardView() {
                     Nueva
                   </Link>
                 </div>
+              </div>
+
+              {/* Webhooks */}
+              <div className="flex flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+                <div className="flex flex-1 items-center gap-4 border-b border-black/10 p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/5">
+                    <Webhook size={24} className="text-black/70" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Webhooks</h3>
+                    <p className="text-sm text-black/60">Auditoría de eventos Mercado Pago</p>
+                  </div>
+                </div>
+                <Link
+                  href="/admin/webhooks"
+                  className="flex items-center justify-center gap-2 py-4 text-sm font-medium text-black/70 transition hover:bg-black hover:text-white"
+                >
+                  <Eye size={16} />
+                  Ver eventos
+                </Link>
               </div>
 
               {/* Stats Summary */}

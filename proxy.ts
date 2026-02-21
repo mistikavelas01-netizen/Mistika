@@ -63,11 +63,14 @@ export function proxy(request: NextRequest) {
 
   // ——— Rutas de API: validación de token admin ———
 
+  // Rutas que no requieren Bearer token (MP webhook, login, etc.)
   const publicRoutes = [
     "/api/auth/login",
     "/api/auth/verify",
     "/api/mail",
     "/api/cloudinary/sign",
+    "/api/webhooks", // POST desde Mercado Pago (URL puede ser /api/webhooks o /api/webhooks/mercadopago)
+    "/api/webhooks/mercadopago",
   ];
 
   if (publicRoutes.includes(pathname)) {
@@ -80,6 +83,14 @@ export function proxy(request: NextRequest) {
     if (pathname === "/api/orders" && method === "POST") return true;
     if (pathname.match(/^\/api\/orders\/number\/[^/]+$/) && method === "GET") return true;
     if (pathname.match(/^\/api\/orders\/details\/\d+$/) && method === "GET") return true;
+    // Checkout y pagos: cualquier usuario puede comprar sin token admin
+    if (pathname === "/api/checkout/draft" && method === "POST") return true;
+    if (pathname.match(/^\/api\/checkout\/draft\/[^/]+\/status$/) && method === "GET") return true;
+    if (pathname === "/api/payments/mercadopago/preference" && method === "POST") return true;
+    // Verificación de retorno desde MP (lo llama el front en /checkout/return, sin token)
+    if (pathname === "/api/payments/mercadopago/verify" && method === "GET") return true;
+    // Webhook de Mercado Pago (lo llama MP, sin token)
+    if ((pathname === "/api/webhooks" || pathname === "/api/webhooks/mercadopago") && method === "POST") return true;
     return false;
   })();
 

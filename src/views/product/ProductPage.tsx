@@ -118,7 +118,8 @@ export function ProductPage() {
   if (isLoadingProduct) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-10">
-        <div className="text-center py-20">
+        <div className="flex min-h-[50vh] flex-col items-center justify-center py-20 text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-black/10 border-t-black" />
           <p className="text-neutral-600">Cargando producto...</p>
         </div>
       </main>

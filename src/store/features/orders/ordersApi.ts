@@ -81,6 +81,34 @@ export const ordersApi = apiSlice.injectEndpoints({
       providesTags: (result, error, { id }) => [{ type: "Orders", id: String(id) }],
     }),
 
+    // Create checkout draft (order data before payment)
+    createCheckoutDraft: build.mutation({
+      query: (orderData: OrderInput) => ({
+        url: "/checkout/draft",
+        method: "POST",
+        body: orderData,
+      }),
+      transformResponse: (response: { success?: boolean; data?: { id: string } }) => {
+        if (response.success && response.data) return { success: true, data: response.data };
+        return response;
+      },
+    }),
+
+    // Create Mercado Pago preference for a draft (returns init_point)
+    createMercadoPagoPreference: build.mutation({
+      query: (params: { draftId: string; payer?: { email?: string; name?: string } }) => ({
+        url: "/payments/mercadopago/preference",
+        method: "POST",
+        body: params,
+      }),
+      transformResponse: (response: { success?: boolean; data?: { init_point: string; sandbox_init_point?: string | null; preferenceId: string } }) => {
+        if (response.success && response.data) {
+          return { success: true, data: response.data };
+        }
+        return response;
+      },
+    }),
+
     // Create order (mutation)
     createOrder: build.mutation({
       query: (orderData: OrderInput) => ({
@@ -140,6 +168,8 @@ export const {
   useFetchOrderByNumberQuery,
   useFetchOrderDetailsWithTokenQuery,
   useCreateOrderMutation,
+  useCreateCheckoutDraftMutation,
+  useCreateMercadoPagoPreferenceMutation,
   useUpdateOrderMutation,
   useDeleteOrderMutation,
 } = ordersApi;

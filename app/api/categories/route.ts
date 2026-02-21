@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { categoriesRepo, toApiEntityList, toApiEntity } from "@/firebase/repos";
+import { categoriesRepo, toApiEntityList, toApiEntity } from "../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { logger } from "../_utils/logger";
+import { withApiRoute } from "../_utils/with-api-route";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiRoute({ route: "/api/categories" }, async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const activeOnly = searchParams.get("activeOnly") === "true";
@@ -16,15 +18,15 @@ export async function GET(request: NextRequest) {
       data: toApiEntityList(sorted),
     });
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    logger.error("categories.fetch_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudieron obtener las categorías" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/categories" }, async (request: NextRequest) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -60,10 +62,10 @@ export async function POST(request: NextRequest) {
       data: toApiEntity(created),
     });
   } catch (error) {
-    console.error("Error creating category:", error);
+    logger.error("categories.create_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo crear la categoría" },
       { status: 500 }
     );
   }
-}
+});

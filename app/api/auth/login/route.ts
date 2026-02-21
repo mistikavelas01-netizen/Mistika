@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminsRepo } from "@/firebase/repos";
+import { adminsRepo } from "../../_utils/repos";
 import { hashPassword, safeEqual, signAdminToken } from "@/lib/auth/server";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 type LoginPayload = {
   username?: string;
   password?: string;
 };
 
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/auth/login" }, async (request: NextRequest) => {
   try {
     const body = (await request.json()) as LoginPayload;
     const username = body.username?.trim();
@@ -63,10 +65,10 @@ export async function POST(request: NextRequest) {
     const token = signAdminToken({ id: adminId, username: admin.username });
     return NextResponse.json({ token });
   } catch (error) {
-    console.error(error);
+    logger.error("auth.login_failed", { error });
     return NextResponse.json(
       { error: "Error al iniciar sesión" },
       { status: 500 }
     );
   }
-}
+});
