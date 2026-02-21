@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/auth/server";
-import { logger } from "../_utils/logger";
-import { withApiRoute } from "../_utils/with-api-route";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 /**
  * GET /api/auth/verify

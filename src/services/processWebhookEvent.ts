@@ -1,7 +1,14 @@
 import "server-only";
 import { webhookEventsRepo, paymentsRepo } from "@/firebase/repos";
-import { MercadoPagoService } from "@/services/MercadoPagoService";
-import { BillingService } from "@/services/BillingService";
+import {
+  getPaymentById as getMpPaymentById,
+  getChargebackById,
+  getClaimById,
+} from "@/services/MercadoPagoService";
+import {
+  routeByPaymentStatus,
+  handleRefundOrChargeback,
+} from "@/services/BillingService";
 import { mapMpPaymentToPaymentDocument } from "@/lib/mercadopago/map-mp-payment-to-doc";
 import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/process-payment-result";
 
@@ -13,7 +20,7 @@ export async function processWebhookEventByTopic(
   const { eventId, topic, resourceId } = params;
   try {
     if (topic === "payment" || topic === "payments") {
-      const mpPayment = await MercadoPagoService.getPaymentById(resourceId);
+      const mpPayment = await getMpPaymentById(resourceId);
       if (!mpPayment) {
         const ev = await webhookEventsRepo.getById(eventId);
         await webhookEventsRepo.update(eventId, {
@@ -39,10 +46,10 @@ export async function processWebhookEventByTopic(
         const createdPayment = await paymentsRepo.create(doc as import("@/firebase/repos").PaymentEntity);
         payment = createdPayment as import("@/firebase/repos").PaymentEntity & { _id: string };
       }
-      await BillingService.routeByPaymentStatus(payment);
+      await routeByPaymentStatus(payment);
       await processPaymentResult(mpPayment as unknown as MpPaymentLike, { auditLogPrefix: "[MP Webhook Retry]" });
     } else if (topic === "topic_chargebacks_wh") {
-      const chargeback = await MercadoPagoService.getChargebackById(resourceId);
+      const chargeback = await getChargebackById(resourceId);
       if (chargeback?.payments && Array.isArray(chargeback.payments)) {
         for (const paymentId of chargeback.payments as number[]) {
           const pid = String(paymentId);
@@ -58,7 +65,7 @@ export async function processWebhookEventByTopic(
               riskFlagged: true,
               lastSyncedAt: Date.now(),
             });
-            await BillingService.handleRefundOrChargeback({
+            await handleRefundOrChargeback({
               ...byMpId[0],
               status: "charged_back",
               accessActive: false,
@@ -68,7 +75,7 @@ export async function processWebhookEventByTopic(
         }
       }
     } else if (topic === "topic_claims_integration_wh") {
-      await MercadoPagoService.getClaimById(resourceId);
+      await getClaimById(resourceId);
     }
     const ev = await webhookEventsRepo.getById(eventId);
     await webhookEventsRepo.update(eventId, {

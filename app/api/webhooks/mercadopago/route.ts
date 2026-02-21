@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyMercadoPagoWebhookSignature } from "@/lib/webhooks/verifySignature";
 import { isMercadoPagoConfigured } from "@/lib/mercadopago/client";
-import { MercadoPagoService } from "@/services/MercadoPagoService";
-import { BillingService } from "@/services/BillingService";
+import {
+  getPaymentById as getMpPaymentById,
+  getChargebackById,
+  getClaimById,
+} from "@/services/MercadoPagoService";
+import {
+  routeByPaymentStatus,
+  handleRefundOrChargeback,
+} from "@/services/BillingService";
 import { webhookEventsRepo, paymentsRepo } from "../../_utils/repos";
 import { mapMpPaymentToPaymentDocument } from "@/lib/mercadopago/map-mp-payment-to-doc";
 import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/process-payment-result";
@@ -147,7 +154,7 @@ export const POST = withApiRoute({ route: "/api/webhooks/mercadopago" }, async (
         logger.info("mp.webhook.process_payment", { resourceId });
         const mpPayment = await withDependency(
           { name: "mercadopago", operation: "payment.get" },
-          () => MercadoPagoService.getPaymentById(resourceId)
+          () => getMpPaymentById(resourceId)
         );
         if (!mpPayment) {
           logger.warn("mp.webhook.payment_not_found", { resourceId });
@@ -174,7 +181,7 @@ export const POST = withApiRoute({ route: "/api/webhooks/mercadopago" }, async (
           const createdPayment = await paymentsRepo.create(doc as import("@/firebase/repos").PaymentEntity);
           payment = createdPayment as import("@/firebase/repos").PaymentEntity & { _id: string };
         }
-        await BillingService.routeByPaymentStatus(payment);
+        await routeByPaymentStatus(payment);
         await withDependency(
           { name: "app", operation: "processPaymentResult" },
           () => processPaymentResult(mpPayment as unknown as MpPaymentLike, { auditLogPrefix: "[MP Webhook]" })
@@ -183,7 +190,7 @@ export const POST = withApiRoute({ route: "/api/webhooks/mercadopago" }, async (
         logger.info("mp.webhook.process_chargeback", { resourceId });
         const chargeback = await withDependency(
           { name: "mercadopago", operation: "chargeback.get" },
-          () => MercadoPagoService.getChargebackById(resourceId)
+          () => getChargebackById(resourceId)
         );
         if (chargeback?.payments && Array.isArray(chargeback.payments)) {
           for (const paymentId of chargeback.payments as number[]) {
@@ -200,7 +207,7 @@ export const POST = withApiRoute({ route: "/api/webhooks/mercadopago" }, async (
                 riskFlagged: true,
                 lastSyncedAt: Date.now(),
               });
-              await BillingService.handleRefundOrChargeback({
+              await handleRefundOrChargeback({
                 ...byMpId[0],
                 status: "charged_back",
                 accessActive: false,
@@ -213,7 +220,7 @@ export const POST = withApiRoute({ route: "/api/webhooks/mercadopago" }, async (
         logger.info("mp.webhook.process_claim", { resourceId });
         await withDependency(
           { name: "mercadopago", operation: "claim.get" },
-          () => MercadoPagoService.getClaimById(resourceId)
+          () => getClaimById(resourceId)
         );
       } else {
         logger.info("mp.webhook.no_handler", { topic, action });

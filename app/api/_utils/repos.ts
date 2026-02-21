@@ -2,7 +2,13 @@ import * as baseRepos from "@/firebase/repos";
 import type { FirebaseRepository } from "@/firebase/repository";
 import { withDependency } from "./dependencies";
 
-const wrapRepo = <T>(repo: FirebaseRepository<T>, name: string) => {
+type RepoBaseEntity = {
+  _id?: string;
+  createdAt?: Date | number;
+  updatedAt?: Date | number;
+};
+
+const wrapRepo = <T extends RepoBaseEntity>(repo: FirebaseRepository<T>, name: string) => {
   return {
     create: (data: T) =>
       withDependency({ name: "firestore", operation: `${name}.create` }, () => repo.create(data)),

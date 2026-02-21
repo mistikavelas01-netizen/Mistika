@@ -12,7 +12,7 @@ const shouldLog = (level: LogLevel) => LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[L
 
 const EMAIL_REGEX = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi;
 const JWT_REGEX = /eyJ[a-zA-Z0-9_-]+\\.[a-zA-Z0-9_-]+\\.[a-zA-Z0-9_-]+/g;
-const BEARER_REGEX = /Bearer\\s+[A-Za-z0-9\\-._~+/]+=*/g;
+const BEARER_REGEX = /Bearer\s+[A-Za-z0-9._+\/-~]+=*/g;
 
 const redactString = (value: string) =>
   value
