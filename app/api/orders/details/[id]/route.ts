@@ -45,45 +45,47 @@ async function enrichOrderWithItemsAndCategory(order: Awaited<ReturnType<typeof 
 export const GET = withApiRoute(
   { route: "/api/orders/details/[id]" },
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-  try {
-    const { id } = await params;
+    try {
+      const { id } = await params;
 
-    const token = request.nextUrl.searchParams.get("token");
-    if (!token) {
+      const token = request.nextUrl.searchParams.get("token");
+      const expires = request.nextUrl.searchParams.get("expires");
+      if (!token || !expires) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Token requerido para acceder a los detalles del pedido",
+          },
+          { status: 401 }
+        );
+      }
+
+      if (!verifyOrderToken(id, token, expires)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Token inválido o no autorizado para este pedido",
+          },
+          { status: 403 }
+        );
+      }
+
+      const order = await ordersRepo.getById(id);
+      if (!order) {
+        return NextResponse.json(
+          { success: false, error: "Pedido no encontrado" },
+          { status: 404 }
+        );
+      }
+
+      const data = await enrichOrderWithItemsAndCategory(order);
+      return NextResponse.json({ success: true, data });
+    } catch (error) {
+      logger.error("orders.details_fetch_failed", { error });
       return NextResponse.json(
-        {
-          success: false,
-          error: "Token requerido para acceder a los detalles del pedido",
-        },
-        { status: 401 }
+        { success: false, error: "Error al obtener los detalles del pedido" },
+        { status: 500 }
       );
     }
-
-    if (!verifyOrderToken(id, token)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Token inválido o no autorizado para este pedido",
-        },
-        { status: 403 }
-      );
-    }
-
-    const order = await ordersRepo.getById(id);
-    if (!order) {
-      return NextResponse.json(
-        { success: false, error: "Pedido no encontrado" },
-        { status: 404 }
-      );
-    }
-
-    const data = await enrichOrderWithItemsAndCategory(order);
-    return NextResponse.json({ success: true, data });
-  } catch (error) {
-    logger.error("orders.details_fetch_failed", { error });
-    return NextResponse.json(
-      { success: false, error: "Error al obtener los detalles del pedido" },
-      { status: 500 }
-    );
   }
-});
+);
