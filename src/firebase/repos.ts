@@ -34,6 +34,8 @@ export const COLLECTIONS = {
   ORDER_DRAFTS: "order_drafts",
   CHECKOUT_ORDERS: "checkout_orders",
   PAYMENT_ATTEMPTS: "payment_attempts",
+  WEBHOOK_EVENTS: "webhook_events",
+  PAYMENTS: "payments",
 } as const;
 
 /** Estados del flujo de pago (Checkout Pro) */
@@ -144,6 +146,52 @@ export interface OrderEntity extends FirebaseEntity {
   mpWebhookLogs?: { topic: string; paymentId?: string; timestamp: number }[];
 }
 
+/** Estado de evento de webhook (auditoría) */
+export type WebhookEventStatus = "received" | "processed" | "failed";
+
+/** Evento de webhook guardado para idempotencia y auditoría */
+export interface WebhookEventEntity extends FirebaseEntity {
+  provider: string;
+  eventId: string;
+  topic: string;
+  action: string;
+  resourceId: string;
+  actionCreatedAtBucket?: string | null;
+  status: WebhookEventStatus;
+  retryCount: number;
+  lastError?: string | null;
+  rawPayloadTruncated?: string | null;
+  processedAt?: number | null;
+}
+
+/** Estado de pago MP en nuestra entidad Payment */
+export type PaymentStatus =
+  | "approved"
+  | "pending"
+  | "rejected"
+  | "cancelled"
+  | "refunded"
+  | "charged_back"
+  | "in_process"
+  | "in_mediation"
+  | "expired";
+
+/** Pago sincronizado desde MP (BillingService, acceso) */
+export interface PaymentEntity extends FirebaseEntity {
+  mpPaymentId: string;
+  status: PaymentStatus;
+  amount: number;
+  currency: string;
+  payerEmail?: string | null;
+  payerId?: string | null;
+  externalReference?: string | null;
+  metadata?: Record<string, unknown> | null;
+  accessActive: boolean;
+  riskFlagged?: boolean | null;
+  lastMpStatus?: string | null;
+  lastSyncedAt?: number | null;
+}
+
 /** Borrador de orden: se crea antes del pago y se convierte en Order cuando MP aprueba */
 export interface OrderDraftEntity extends FirebaseEntity {
   status: "pending" | "converted" | "expired";
@@ -183,3 +231,5 @@ export const orderItemsRepo = new FirebaseRepository<OrderItemEntity>(COLLECTION
 export const orderDraftsRepo = new FirebaseRepository<OrderDraftEntity>(COLLECTIONS.ORDER_DRAFTS);
 export const checkoutOrdersRepo = new FirebaseRepository<CheckoutOrderEntity>(COLLECTIONS.CHECKOUT_ORDERS);
 export const paymentAttemptsRepo = new FirebaseRepository<PaymentAttemptEntity>(COLLECTIONS.PAYMENT_ATTEMPTS);
+export const webhookEventsRepo = new FirebaseRepository<WebhookEventEntity>(COLLECTIONS.WEBHOOK_EVENTS);
+export const paymentsRepo = new FirebaseRepository<PaymentEntity>(COLLECTIONS.PAYMENTS);

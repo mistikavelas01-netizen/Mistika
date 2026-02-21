@@ -125,7 +125,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
             : prefResult?.data?.init_point ?? prefResult?.data?.sandbox_init_point;
 
           if (initPoint) {
-            const isSandboxUrl = initPoint.includes("sandbox.mercadopago");
+            const isSandboxUrl = initPoint.includes("mercadopago");
             if (typeof console !== "undefined" && console.info) {
               console.info(
                 "[Checkout] Redirigiendo a Mercado Pago:",
