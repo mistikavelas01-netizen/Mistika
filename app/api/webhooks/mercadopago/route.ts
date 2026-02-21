@@ -7,6 +7,7 @@ import { webhookEventsRepo, paymentsRepo } from "@/firebase/repos";
 import { mapMpPaymentToPaymentDocument } from "@/lib/mercadopago/map-mp-payment-to-doc";
 import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/process-payment-result";
 
+/** Clave secreta de Webhooks (Tus integraciones > Webhooks). Verifica autenticidad con x-signature. */
 const WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET;
 const MAX_BODY_SIZE = 512 * 1024; // 512 KB
 const RAW_PAYLOAD_MAX_LEN = 16 * 1024; // 16 KB for audit
@@ -72,23 +73,31 @@ export async function POST(request: NextRequest) {
 
     const payload = parsePayload(rawBody, contentType);
     const { topic, action, resourceId } = getTopicAndAction(payload);
-    const dataIdForSignature = resourceId ? resourceId.toLowerCase() : "";
-    console.log(`${LOG_PREFIX} [${requestId}] parsed topic=${topic} action=${action} resourceId=${resourceId}`);
+    // data.id para la firma: puede venir en query (doc MP) o en el body
+    const dataIdFromQuery = request.nextUrl.searchParams.get("data.id");
+    const dataIdForSignature = (dataIdFromQuery ?? resourceId).toString().trim();
+    const dataIdNormalized = dataIdForSignature ? dataIdForSignature.toLowerCase() : "";
+    console.log(`${LOG_PREFIX} [${requestId}] parsed topic=${topic} action=${action} resourceId=${resourceId} dataIdForSignature=${dataIdNormalized || "(empty)"}`);
 
-    // Verificación de firma (cabecera x-signature). MP envía el payload en el body; la firma viene en headers.
-    // Si hay secret y la firma falta o es inválida, guardamos el evento pero no procesamos (no llamamos a MP ni actualizamos pagos).
+    // Verificación de firma (x-signature + MERCADOPAGO_WEBHOOK_SECRET). Doc: developers.mercadopago > Webhooks > Validar origen.
+    // Si hay secret y la firma falta o es inválida, guardamos el evento pero no procesamos (no ejecutamos lógica de negocio).
     let signatureValid = true;
-    if (WEBHOOK_SECRET && resourceId) {
+    if (WEBHOOK_SECRET && dataIdNormalized) {
       const xSignature = request.headers.get("x-signature");
       const xRequestId = request.headers.get("x-request-id");
       const hasSignature = !!xSignature;
-      const valid = hasSignature && verifyMercadoPagoWebhookSignature(xSignature, xRequestId, dataIdForSignature, WEBHOOK_SECRET);
+      const valid =
+        hasSignature &&
+        verifyMercadoPagoWebhookSignature(xSignature, xRequestId, dataIdNormalized, WEBHOOK_SECRET, {
+          skipTimestampTolerance: process.env.NODE_ENV !== "production",
+        });
       if (!valid) {
         signatureValid = false;
         console.log(`${LOG_PREFIX} [${requestId}] signature check: hasSignature=${hasSignature} valid=false -> will save event but skip processing`);
       }
     } else {
-      console.log(`${LOG_PREFIX} [${requestId}] no secret or no resourceId, skipping signature check`);
+      if (!WEBHOOK_SECRET) console.log(`${LOG_PREFIX} [${requestId}] MERCADOPAGO_WEBHOOK_SECRET not set, skipping signature check`);
+      else console.log(`${LOG_PREFIX} [${requestId}] no data.id for signature, skipping verification`);
     }
 
     const eventId = payload?.id != null ? String(payload.id) : `${topic}_${resourceId}_${action}_${Date.now()}`;

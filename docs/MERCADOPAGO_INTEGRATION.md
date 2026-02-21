@@ -125,6 +125,15 @@
 | Payload JSON (y form-urlencoded legacy) | ✓ |
 | Idempotencia por mp_payment_id | ✓ |
 
+### 6.1 Clave secreta del webhook (MERCADOPAGO_WEBHOOK_SECRET)
+
+En [Tus integraciones](https://www.mercadopago.com.mx/developers/panel/app) → tu app → **Webhooks** → Configurar notificaciones, al guardar se genera una **clave secreta**. Esa clave permite validar que la notificación la envió Mercado Pago (header `x-signature`).
+
+- **Variable:** `MERCADOPAGO_WEBHOOK_SECRET` en `.env`.
+- **Comportamiento:** Si está definida y la petición trae `x-signature` y `data.id` (en body o query), se calcula HMAC-SHA256 con el manifest `id:<data.id>;request-id:<x-request-id>;ts:<ts>;` (si falta `x-request-id` se omite). Si el HMAC coincide con `v1` del header, el evento se **procesa** (pagos, órdenes, etc.). Si la firma falta o es inválida, el evento se **guarda** en BD para auditoría pero **no se procesa**.
+- **Tolerancia de tiempo:** En producción se rechaza un `ts` con más de 5 minutos de diferencia para evitar replay. En desarrollo se ignora la tolerancia para que el simulador del panel funcione.
+- **Doc:** [Webhooks - Validar origen de una notificación](https://www.mercadopago.com.mx/developers/es/docs/your-integrations/notifications/webhooks).
+
 ## 7. Dónde se configura cada cosa (proyecto vs dashboard MP)
 
 | Qué | Dónde | Dónde se configura |
