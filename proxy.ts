@@ -82,7 +82,7 @@ export function proxy(request: NextRequest) {
     if (pathname.match(/^\/api\/categories(\/[^/]+)?$/) && method === "GET") return true;
     if (pathname === "/api/orders" && method === "POST") return true;
     if (pathname.match(/^\/api\/orders\/number\/[^/]+$/) && method === "GET") return true;
-    if (pathname.match(/^\/api\/orders\/details\/\d+$/) && method === "GET") return true;
+    if (pathname.match(/^\/api\/orders\/details\/[^/]+$/) && method === "GET") return true;
     // Checkout y pagos: cualquier usuario puede comprar sin token admin
     if (pathname === "/api/checkout/draft" && method === "POST") return true;
     if (pathname.match(/^\/api\/checkout\/draft\/[^/]+\/status$/) && method === "GET") return true;

@@ -67,8 +67,8 @@ export const ordersApi = apiSlice.injectEndpoints({
 
     // Fetch order details by ID with token (public access)
     fetchOrderDetailsWithToken: build.query({
-      query: ({ id, token }: { id: string; token: string }) =>
-        `/orders/details/${id}?token=${encodeURIComponent(token)}`,
+      query: ({ id, token, expires }: { id: string; token: string; expires: string }) =>
+        `/orders/details/${id}?token=${encodeURIComponent(token)}&expires=${encodeURIComponent(expires)}`,
       transformResponse: (response: ApiItemResponse<Order>) => {
         if ("success" in response && response.success && response.data) {
           return { data: response.data };

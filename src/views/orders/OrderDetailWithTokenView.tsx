@@ -21,6 +21,12 @@ function getOrderNumberFromUrl(): string | null {
   return params.get("orderNumber");
 }
 
+function getExpiresFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("expires");
+}
+
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
   processing: "bg-blue-100 text-blue-800 border-blue-200",
@@ -46,21 +52,26 @@ export function OrderDetailWithTokenView() {
 
   const tokenFromParams = searchParams.get("token");
   const orderNumberFromParams = searchParams.get("orderNumber");
+  const expiresFromParams = searchParams.get("expires");
 
   const [tokenFromWindow, setTokenFromWindow] = useState<string | null>(null);
   const [orderNumberFromWindow, setOrderNumberFromWindow] = useState<string | null>(null);
+  const [expiresFromWindow, setExpiresFromWindow] = useState<string | null>(null);
   const [hasCheckedWindow, setHasCheckedWindow] = useState(false);
 
   useEffect(() => {
     const t = getTokenFromUrl();
     const n = getOrderNumberFromUrl();
+    const e = getExpiresFromUrl();
     if (t) { setTokenFromWindow(t) }
     if (n) setOrderNumberFromWindow(n);
+    if (e) setExpiresFromWindow(e);
     setHasCheckedWindow(true);
   }, []);
 
-  const token = tokenFromParams ?? tokenFromWindow;
-  const orderNumber = orderNumberFromParams ?? orderNumberFromWindow;
+  const token = tokenFromParams || tokenFromWindow;
+  const orderNumber = orderNumberFromParams || orderNumberFromWindow;
+  const expires = expiresFromParams || expiresFromWindow;
 
   const {
     data: orderData,
@@ -68,8 +79,8 @@ export function OrderDetailWithTokenView() {
     isError,
     error,
   } = useFetchOrderDetailsWithTokenQuery(
-    { id: orderId, token: token || "" },
-    { skip: !orderId || !token }
+    { id: orderId, token: token || "", expires: expires || "" },
+    { skip: !orderId || !token || !expires }
   );
 
   const order = orderData?.data;
@@ -92,7 +103,7 @@ export function OrderDetailWithTokenView() {
     });
   };
 
-  const missingTokenOrId = !orderId || !token;
+  const missingTokenOrId = !orderId || !token || !expires;
   const canShowInvalidLink =
     missingTokenOrId && (typeof window === "undefined" || hasCheckedWindow);
 
