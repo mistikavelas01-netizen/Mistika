@@ -55,7 +55,7 @@ export function CartPage() {
     setShowClearModal(false);
   };
 
-  const shippingCost = 150;
+  const shippingCost = 80;
   const finalTotal = totalPrice + shippingCost;
 
   return (
