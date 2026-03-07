@@ -13,8 +13,8 @@ export const MP_STATUS_TO_CHECKOUT_STATUS: Record<string, CheckoutOrderStatus> =
   in_collection: "PENDING",
   rejected: "REJECTED",
   cancelled: "CANCELLED",
-  refunded: "APPROVED",
-  charged_back: "APPROVED",
+  refunded: "FAILED",
+  charged_back: "FAILED",
   expired: "EXPIRED",
 };
 
@@ -27,7 +27,7 @@ export const MP_PENDING_STATUSES = new Set([
 ]);
 
 /** Status de pago MP que consideramos "aprobado" (orden se confirma) */
-export const MP_APPROVED_STATUSES = new Set(["approved", "refunded", "charged_back"]);
+export const MP_APPROVED_STATUSES = new Set(["approved"]);
 
 /** Status de pago MP que consideramos "rechazado/cancelado/fallido" */
 export const MP_FAILED_STATUSES = new Set(["rejected", "cancelled"]);

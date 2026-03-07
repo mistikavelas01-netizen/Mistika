@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithObservability } from "./_utils/dependencies";
 import { logger } from "./_utils/logger";
 import { withApiRoute } from "./_utils/with-api-route";
+import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 // This is a proxy route that handles all RTK Query requests
 // RTK Query sends requests to /api with endpoint and method in headers
 const proxyHandler = async (req: NextRequest) => {
+  const auth = await requireAdminAuth(req);
+  if (!auth.success) return auth.response;
+
   try {
     const method = req.headers.get("method") || "GET";
     const endpoint = req.headers.get("endpoint") || "";

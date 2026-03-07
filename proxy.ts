@@ -67,8 +67,6 @@ export function proxy(request: NextRequest) {
   const publicRoutes = [
     "/api/auth/login",
     "/api/auth/verify",
-    "/api/mail",
-    "/api/cloudinary/sign",
     "/api/webhooks", // POST desde Mercado Pago (URL puede ser /api/webhooks o /api/webhooks/mercadopago)
     "/api/webhooks/mercadopago",
   ];
@@ -80,7 +78,6 @@ export function proxy(request: NextRequest) {
   const isPublicRoute = (() => {
     if (pathname.match(/^\/api\/products(\/[^/]+)?$/) && method === "GET") return true;
     if (pathname.match(/^\/api\/categories(\/[^/]+)?$/) && method === "GET") return true;
-    if (pathname === "/api/orders" && method === "POST") return true;
     if (pathname.match(/^\/api\/orders\/number\/[^/]+$/) && method === "GET") return true;
     if (pathname.match(/^\/api\/orders\/details\/[^/]+$/) && method === "GET") return true;
     // Checkout y pagos: cualquier usuario puede comprar sin token admin

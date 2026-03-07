@@ -6,6 +6,7 @@ import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/proc
 import { withDependency } from "../../../_utils/dependencies";
 import { logger } from "../../../_utils/logger";
 import { withApiRoute } from "../../../_utils/with-api-route";
+import { generateOrderToken } from "@/lib/order-token";
 
 /**
  * GET /api/payments/mercadopago/verify
@@ -73,10 +74,15 @@ export const GET = withApiRoute({ route: "/api/payments/mercadopago/verify" }, a
       );
       const checkoutOrder = orders[0] ?? null;
       if (checkoutOrder) {
+        const orderAccess =
+          checkoutOrder.status === "APPROVED" && checkoutOrder.convertedOrderId
+            ? generateOrderToken(checkoutOrder.convertedOrderId)
+            : null;
         return NextResponse.json({
           success: true,
           orderId: checkoutOrder.convertedOrderId ?? checkoutOrder._id ?? null,
           orderNumber: checkoutOrder.orderNumber ?? null,
+          orderAccess,
           status: checkoutOrder.status,
           detail: "Estado actual de la orden (sin payment_id en la URL).",
           canRetry: ["REJECTED", "CANCELLED", "EXPIRED", "FAILED"].includes(checkoutOrder.status),
@@ -126,11 +132,16 @@ export const GET = withApiRoute({ route: "/api/payments/mercadopago/verify" }, a
           : canRetry
             ? "retry_checkout"
             : "wait";
+    const orderAccess =
+      status === "APPROVED" && orderId
+        ? generateOrderToken(orderId)
+        : null;
 
     return NextResponse.json({
       success: status === "APPROVED" || status === "PENDING",
       orderId,
       orderNumber,
+      orderAccess,
       status,
       detail: status === "APPROVED"
         ? "Pago aprobado. Tu pedido fue confirmado."
