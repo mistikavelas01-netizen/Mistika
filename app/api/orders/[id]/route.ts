@@ -12,6 +12,8 @@ import type { OrderStatusPayload } from "@/mail/types";
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 
+const LOCKED_ORDER_STATUSES = new Set(["delivered", "cancelled"]);
+
 async function enrichOrderWithItemsAndCategory(
   order: Awaited<ReturnType<typeof ordersRepo.getById>>,
 ) {
@@ -98,6 +100,21 @@ export const PUT = withApiRoute(
         return NextResponse.json(
           { success: false, error: "Pedido no encontrado" },
           { status: 404 },
+        );
+      }
+
+      if (
+        body.status !== undefined &&
+        body.status !== currentOrder.status &&
+        LOCKED_ORDER_STATUSES.has(currentOrder.status)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "No se puede cambiar el estado de un pedido entregado o cancelado",
+          },
+          { status: 409 },
         );
       }
 
