@@ -9,13 +9,13 @@ import { getProductImageUrl } from "@/constant";
 import {
   ArrowLeft,
   Package,
-  MapPin,
   Mail,
   Phone,
   Truck,
   Trash2,
   AlertTriangle,
-  X,
+  ChevronDown,
+  ChevronUp,
   CreditCard,
   Clock,
   CheckCircle,
@@ -74,6 +74,8 @@ const statusConfig: Record<
   },
 };
 
+const lockedStatuses = new Set<OrderStatus>(["delivered", "cancelled"]);
+
 export function OrderDetailAdminView() {
   const params = useParams();
   const router = useRouter();
@@ -91,18 +93,29 @@ export function OrderDetailAdminView() {
   const [deleteOrder, { isLoading: isDeleting }] = useDeleteOrderMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
+  const [showLockedStatusInfo, setShowLockedStatusInfo] = useState(false);
 
   const order = orderData?.data;
   const errorMessage = getApiErrorMessage(error);
+  const isStatusLocked = order ? lockedStatuses.has(order.status) : false;
 
   const handleStatusChange = async () => {
     if (!order || !pendingStatus) return;
+    if (lockedStatuses.has(order.status)) {
+      toast.error("Este pedido ya está finalizado y no permite cambios de estado");
+      setPendingStatus(null);
+      return;
+    }
+
     try {
       await updateOrder({ id: order.id, status: pendingStatus }).unwrap();
       toast.success("Estado actualizado");
       setPendingStatus(null);
     } catch (err) {
-      toast.error("Error al actualizar el estado");
+      toast.error(
+        getApiErrorMessage(err as Parameters<typeof getApiErrorMessage>[0]) ??
+          "Error al actualizar el estado",
+      );
     }
   };
 
@@ -113,7 +126,10 @@ export function OrderDetailAdminView() {
       toast.success(`Pedido eliminado`);
       router.push("/admin/orders");
     } catch (err) {
-      toast.error("Error al eliminar el pedido");
+      toast.error(
+        getApiErrorMessage(err as Parameters<typeof getApiErrorMessage>[0]) ??
+          "Error al eliminar el pedido",
+      );
     }
   };
 
@@ -182,6 +198,17 @@ export function OrderDetailAdminView() {
 
   const currentStatus = statusConfig[order.status as OrderStatus] || statusConfig.pending;
   const StatusIcon = currentStatus.icon;
+  const isCancelledFinal = order.status === "cancelled";
+  const cancellationReason = order.notes?.trim();
+  const lockedCardTone = isCancelledFinal
+    ? {
+        container: "border-red-200 bg-red-50/70",
+        iconWrap: "border-red-200 bg-white text-red-700",
+      }
+    : {
+        container: "border-emerald-200 bg-emerald-50/70",
+        iconWrap: "border-emerald-200 bg-white text-emerald-700",
+      };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
@@ -486,36 +513,115 @@ export function OrderDetailAdminView() {
             {/* Update Status */}
             <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
               <div className="border-b border-black/10 bg-black/5 px-5 py-4">
-                <h3 className="font-semibold">Actualizar estado</h3>
+                <h3 className="font-semibold">
+                  {isStatusLocked ? "Estado final" : "Actualizar estado"}
+                </h3>
               </div>
               <div className="p-4">
-                <div className="grid grid-cols-2 gap-2">
-                  {(
-                    Object.entries(statusConfig) as [
-                      OrderStatus,
-                      typeof statusConfig[OrderStatus],
-                    ][]
-                  ).map(([key, config]) => {
-                    const Icon = config.icon;
-                    const isActive = order.status === key;
+                {isStatusLocked ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`relative overflow-hidden rounded-2xl border p-4 ${lockedCardTone.container}`}
+                  >
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/40" />
+                    <div className="relative space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-11 w-11 items-center justify-center rounded-xl border ${lockedCardTone.iconWrap}`}
+                        >
+                          <StatusIcon size={20} />
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-black/45">
+                            Pedido cerrado
+                          </p>
+                          <p className="text-base font-semibold text-black/85">
+                            {currentStatus.label}
+                          </p>
+                        </div>
+                      </div>
 
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setPendingStatus(key)}
-                        disabled={isUpdating || isActive}
-                        className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-medium transition ${
-                          isActive
-                            ? `${config.bg} ${config.color} ${config.border}`
-                            : "border-black/10 text-black/60 hover:bg-black/5"
-                        } disabled:cursor-not-allowed`}
-                      >
-                        <Icon size={14} />
-                        {config.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                      <p className="text-sm text-black/65">
+                        {isCancelledFinal
+                          ? "Este pedido fue cancelado y ya no permite cambios manuales."
+                          : "Este pedido llegó a un estado final y por seguridad ya no permite cambios manuales."}
+                      </p>
+
+                      {isCancelledFinal && (
+                        <>
+                          <button
+                            onClick={() => setShowLockedStatusInfo((prev) => !prev)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-black/70 transition hover:text-black"
+                          >
+                            {showLockedStatusInfo ? (
+                              <>
+                                Ocultar detalle
+                                <ChevronUp size={14} />
+                              </>
+                            ) : (
+                              <>
+                                Ver detalle
+                                <ChevronDown size={14} />
+                              </>
+                            )}
+                          </button>
+
+                          <AnimatePresence initial={false}>
+                            {showLockedStatusInfo && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-xs text-black/70">
+                                  <p className="mb-1 font-semibold text-black/80">
+                                    Motivo de cancelación
+                                  </p>
+                                  <p>
+                                    {cancellationReason &&
+                                    cancellationReason.length > 0
+                                      ? cancellationReason
+                                      : "No se registró un motivo de cancelación."}
+                                  </p>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {(
+                      Object.entries(statusConfig) as [
+                        OrderStatus,
+                        typeof statusConfig[OrderStatus],
+                      ][]
+                    ).map(([key, config]) => {
+                      const Icon = config.icon;
+                      const isActive = order.status === key;
+
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => setPendingStatus(key)}
+                          disabled={isUpdating || isActive}
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-medium transition ${
+                            isActive
+                              ? `${config.bg} ${config.color} ${config.border}`
+                              : "border-black/10 text-black/60 hover:bg-black/5"
+                          } disabled:cursor-not-allowed`}
+                        >
+                          <Icon size={14} />
+                          {config.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
