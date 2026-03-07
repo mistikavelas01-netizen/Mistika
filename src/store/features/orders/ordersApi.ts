@@ -50,7 +50,7 @@ export const ordersApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: "Orders", id }],
     }),
 
-    // Fetch order by order number
+    // Legacy: fetch order by order number (used only to migrate old links)
     fetchOrderByNumber: build.query({
       query: ({
         orderNumber,

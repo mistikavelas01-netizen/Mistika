@@ -69,3 +69,26 @@ export async function requireAdminAuth(
     };
   }
 }
+
+/**
+ * Verifica si la request trae un Bearer token de administrador válido.
+ * Se usa para habilitar bypass de token público en rutas donde admin ya está autenticado.
+ */
+export function isAdminRequest(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return false;
+  }
+
+  const token = authHeader.substring(7).trim();
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const payload = verifyAdminToken(token);
+    return payload.role === "admin";
+  } catch {
+    return false;
+  }
+}
