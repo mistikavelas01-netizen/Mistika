@@ -129,12 +129,34 @@ export const PUT = withApiRoute(
           status: body.status as "processing" | "shipped" | "delivered",
           orderUrl,
         };
-        // Envío de correo deshabilitado para no gastar créditos (Resend)
-        // sendMail({
-        //   type: "order-status",
-        //   to: currentOrder.customerEmail,
-        //   payload: emailPayload,
-        // }).catch((err) => console.error("[Orders API] Failed to send status email:", err));
+
+        try {
+          const result = await sendMail({
+            type: "order-status",
+            to: currentOrder.customerEmail,
+            payload: emailPayload,
+          });
+
+          if (!result.ok) {
+            logger.error("orders.status_email_failed", {
+              orderId: id,
+              status: body.status,
+              error: result.error,
+            });
+          } else {
+            logger.info("orders.status_email_sent", {
+              orderId: id,
+              status: body.status,
+              messageId: result.messageId,
+            });
+          }
+        } catch (err) {
+          logger.error("orders.status_email_failed", {
+            orderId: id,
+            status: body.status,
+            error: err,
+          });
+        }
       }
 
       return NextResponse.json({ success: true, data });
