@@ -32,7 +32,6 @@ export function OrderDetailWithTokenView() {
   const orderId = typeof idParam === "string" ? idParam : Array.isArray(idParam) ? idParam[0] ?? "" : "";
 
   const token = searchParams.get("token") ?? "";
-  const orderNumber = searchParams.get("orderNumber") ?? "";
   const expires = searchParams.get("expires") ?? "";
 
   const {
@@ -156,7 +155,7 @@ export function OrderDetailWithTokenView() {
           </div>
           <div className="flex items-center gap-4">
             <h1 className="text-4xl font-semibold tracking-[0.05em] sm:text-5xl">
-              {order.orderNumber || orderNumber}
+              {order.orderNumber}
             </h1>
             <span
               className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${statusColors[order.status as OrderStatus]}`}

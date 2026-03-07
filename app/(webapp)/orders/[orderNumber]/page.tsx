@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { OrderDetailView } from "@/views/orders/OrderDetailView";
+import { OrderByNumberRedirectView } from "@/views/orders/OrderByNumberRedirectView";
 
 export default function OrderDetail() {
   return (
@@ -10,7 +10,7 @@ export default function OrderDetail() {
         </main>
       }
     >
-      <OrderDetailView />
+      <OrderByNumberRedirectView />
     </Suspense>
   );
 }
