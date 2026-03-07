@@ -61,7 +61,7 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
         {
           success: false,
           error:
-            "Configura NEXT_PUBLIC_APP_URL o VERCEL_URL con una URL absoluta (ej. https://tudominio.com o http://localhost:3000)",
+            "Configura NEXT_PUBLIC_SITE_URL o VERCEL_URL con una URL absoluta (ej. https://tudominio.com o http://localhost:3000)",
         },
         { status: 500 }
       );

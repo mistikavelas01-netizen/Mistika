@@ -39,7 +39,7 @@
 | Variable | Uso |
 |----------|-----|
 | `MERCADOPAGO_ACCESS_TOKEN` | Obligatorio. Credenciales de prueba o producción. |
-| `NEXT_PUBLIC_APP_URL` o `VERCEL_URL` | Base URL para `back_urls` y `notification_url`. |
+| `NEXT_PUBLIC_SITE_URL` o `VERCEL_URL` | Base URL para `back_urls` y `notification_url`. |
 | `MERCADOPAGO_WEBHOOK_SECRET` | Opcional. Validación de firma `x-signature` en webhook. |
 | `NEXT_PUBLIC_MERCADOPAGO_USE_SANDBOX` | Opcional. Forzar sandbox en frontend. |
 

@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/style/globals.css";
 import { Providers } from "./(webapp)/Providers";
+import { getAppBaseUrl } from "@/lib/app-url";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = getAppBaseUrl();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
