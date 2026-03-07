@@ -153,20 +153,6 @@ export const ordersApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Delete order (mutation)
-    deleteOrder: build.mutation({
-      query: (id: string) => ({
-        url: `/orders/${id}`,
-        method: "DELETE",
-      }),
-      transformResponse: (response: ApiMutationResponse<Order>) => {
-        if ("success" in response && response.success) {
-          return { success: true };
-        }
-        return response;
-      },
-      invalidatesTags: ["Orders"],
-    }),
   }),
 });
 
@@ -180,5 +166,4 @@ export const {
   useCreateCheckoutDraftMutation,
   useCreateMercadoPagoPreferenceMutation,
   useUpdateOrderMutation,
-  useDeleteOrderMutation,
 } = ordersApi;

@@ -191,36 +191,12 @@ export const PUT = withApiRoute(
 
 export const DELETE = withApiRoute(
   { route: "/api/orders/[id]" },
-  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (request: NextRequest) => {
     const auth = await requireAdminAuth(request);
     if (!auth.success) return auth.response;
 
-    try {
-      const { id } = await params;
-
-      const order = await ordersRepo.getById(id);
-      if (!order) {
-        return NextResponse.json(
-          { success: false, error: "Pedido no encontrado" },
-          { status: 404 },
-        );
-      }
-
-      const items = await orderItemsRepo.where("orderId", "==", id);
-      for (const item of items) {
-        if (item._id) await orderItemsRepo.remove(item._id);
-      }
-      await ordersRepo.remove(id);
-
-      return NextResponse.json({
-        success: true,
-        message: "Pedido eliminado correctamente",
-      });
-    } catch (error) {
-      logger.error("orders.delete_failed", { error });
-      return NextResponse.json(
-        { success: false, error: "No se pudo eliminar el pedido" },
-        { status: 500 },
-      );
-    }
+    return NextResponse.json(
+      { success: false, error: "No se permite eliminar pedidos" },
+      { status: 405 },
+    );
 });
