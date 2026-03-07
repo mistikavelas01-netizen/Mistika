@@ -21,6 +21,7 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { getProductImageUrl } from "@/constant";
 
 const CHECKOUT_RETURN_TOAST_KEY = "checkout_return_toast";
+const FREE_SHIPPING_ENABLED = process.env.NEXT_PUBLIC_FREE_SHIPPING_ENABLED === "true";
 
 export function CartPage() {
   const {
@@ -55,7 +56,7 @@ export function CartPage() {
     setShowClearModal(false);
   };
 
-  const shippingCost = 80;
+  const shippingCost = FREE_SHIPPING_ENABLED ? 0 : 80;
   const finalTotal = totalPrice + shippingCost;
 
   return (

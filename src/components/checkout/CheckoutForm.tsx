@@ -43,6 +43,7 @@ const MERCADO_PAGO_ALLOWED_HOSTS = [
   "mercadopago.com",
   "mercadopago.com.mx",
 ];
+const FREE_SHIPPING_ENABLED = process.env.NEXT_PUBLIC_FREE_SHIPPING_ENABLED === "true";
 
 function isTrustedMercadoPagoUrl(rawUrl: string): boolean {
   try {
@@ -86,8 +87,9 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const shippingCost =
-    shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
+  const shippingCost = FREE_SHIPPING_ENABLED
+    ? 0
+    : shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
   const totalAmount = totalPrice + shippingCost;
   const navigateToCartFallback = () => {
     onClose();
@@ -372,7 +374,9 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
                     <p className="text-xs text-black/50">{option.days}</p>
                   </div>
                 </div>
-                <span className="text-sm font-semibold">${option.cost}</span>
+                <span className="text-sm font-semibold">
+                  ${FREE_SHIPPING_ENABLED ? 0 : option.cost}
+                </span>
               </label>
             ))}
           </div>

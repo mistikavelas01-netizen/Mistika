@@ -6,6 +6,10 @@ import {
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 
+function isFreeShippingEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_FREE_SHIPPING_ENABLED?.trim().toLowerCase() === "true";
+}
+
 /**
  * POST /api/checkout/draft
  *
@@ -167,7 +171,7 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
 
     const shippingMethod = typeof body.shippingMethod === "string" ? body.shippingMethod.trim() : "standard";
     const shippingCosts: Record<string, number> = { standard: 80, express: 120, overnight: 500 };
-    const shippingCost = shippingCosts[shippingMethod] ?? 150;
+    const shippingCost = isFreeShippingEnabled() ? 0 : shippingCosts[shippingMethod] ?? 150;
     const tax = 0;
 
     const orderItemsForCreate = normalizedItems.map((item) => {
