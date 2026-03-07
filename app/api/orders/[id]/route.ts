@@ -12,6 +12,8 @@ import type { OrderStatusPayload } from "@/mail/types";
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 
+const LOCKED_ORDER_STATUSES = new Set(["delivered", "cancelled"]);
+
 async function enrichOrderWithItemsAndCategory(
   order: Awaited<ReturnType<typeof ordersRepo.getById>>,
 ) {
@@ -101,6 +103,21 @@ export const PUT = withApiRoute(
         );
       }
 
+      if (
+        body.status !== undefined &&
+        body.status !== currentOrder.status &&
+        LOCKED_ORDER_STATUSES.has(currentOrder.status)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "No se puede cambiar el estado de un pedido entregado o cancelado",
+          },
+          { status: 409 },
+        );
+      }
+
       const updateData: Partial<typeof currentOrder> = {};
       if (body.status !== undefined) updateData.status = body.status;
       if (body.paymentStatus !== undefined)
@@ -132,12 +149,34 @@ export const PUT = withApiRoute(
           status: body.status as "processing" | "shipped" | "delivered",
           orderUrl,
         };
-        // Envío de correo deshabilitado para no gastar créditos (Resend)
-        // sendMail({
-        //   type: "order-status",
-        //   to: currentOrder.customerEmail,
-        //   payload: emailPayload,
-        // }).catch((err) => console.error("[Orders API] Failed to send status email:", err));
+
+        try {
+          const result = await sendMail({
+            type: "order-status",
+            to: currentOrder.customerEmail,
+            payload: emailPayload,
+          });
+
+          if (!result.ok) {
+            logger.error("orders.status_email_failed", {
+              orderId: id,
+              status: body.status,
+              error: result.error,
+            });
+          } else {
+            logger.info("orders.status_email_sent", {
+              orderId: id,
+              status: body.status,
+              messageId: result.messageId,
+            });
+          }
+        } catch (err) {
+          logger.error("orders.status_email_failed", {
+            orderId: id,
+            status: body.status,
+            error: err,
+          });
+        }
       }
 
       return NextResponse.json({ success: true, data });

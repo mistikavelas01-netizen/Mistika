@@ -139,13 +139,13 @@ En [Tus integraciones](https://www.mercadopago.com.mx/developers/panel/app) → 
 | Qué | Dónde | Dónde se configura |
 |-----|--------|----------------------|
 | **Access Token** | Proyecto (`.env` → `MERCADOPAGO_ACCESS_TOKEN`) | Lo **copias** del dashboard: [Tus integraciones](https://www.mercadopago.com.mx/developers/panel/app) → tu app → **Credenciales de prueba** (pruebas) o **Credenciales de producción** (producción). El token puede empezar con `APP_USR-` en ambos. |
-| **URL base de la app** | Proyecto (`.env` → `NEXT_PUBLIC_APP_URL`) | La **defines tú**: `http://localhost:3000` en desarrollo, `https://tudominio.com` en producción. Debe ser absoluta (MP la usa en `back_urls` y `notification_url`). |
-| **URL del webhook** | Proyecto (código) | Se **arma en código** con `NEXT_PUBLIC_APP_URL`: `{baseUrl}/api/webhooks/mercadopago?source_news=webhooks`. No se pone en el dashboard para el flujo por preferencia (cada preferencia lleva su `notification_url`). |
+| **URL base de la app** | Proyecto (`.env` → `NEXT_PUBLIC_SITE_URL`) | La **defines tú**: `http://localhost:3000` en desarrollo, `https://tudominio.com` en producción. Debe ser absoluta (MP la usa en `back_urls` y `notification_url`). |
+| **URL del webhook** | Proyecto (código) | Se **arma en código** con `NEXT_PUBLIC_SITE_URL`: `{baseUrl}/api/webhooks/mercadopago?source_news=webhooks`. No se pone en el dashboard para el flujo por preferencia (cada preferencia lleva su `notification_url`). |
 | **Webhooks en el panel** | Dashboard MP (opcional) | En [Tus integraciones](https://www.mercadopago.com.mx/developers/panel/app) → **Webhooks** puedes configurar una URL y obtener el **Secret** para validar firma. Si usas el Secret, ponlo en `.env` como `MERCADOPAGO_WEBHOOK_SECRET`. Los pagos de **prueba** no disparan webhooks automáticos; para probar usa “Simular” en el panel o un túnel (ngrok) con credenciales de producción en modo test. |
 | **Tarjetas de prueba** | Documentación MP | No se configuran en el proyecto ni en el dashboard. Usa las de [Tarjetas de prueba (México)](https://www.mercadopago.com.mx/developers/es/docs/checkout-pro/additional-content/test-cards). En localhost la app ya redirige a **sandbox** para que funcionen. |
 | **Usuarios de prueba** | Dashboard MP | Opcional: en el panel puedes crear compradores de prueba para no usar tu cuenta real. |
 
-**Resumen:** En el **proyecto** solo debes tener bien el `MERCADOPAGO_ACCESS_TOKEN` (copiado del dashboard) y `NEXT_PUBLIC_APP_URL`. El resto (preferencia, back_urls, webhook handler) ya está implementado en el código. En el **dashboard** solo necesitas las credenciales; el webhook URL y el Secret son opcionales si quieres validar la firma.
+**Resumen:** En el **proyecto** solo debes tener bien el `MERCADOPAGO_ACCESS_TOKEN` (copiado del dashboard) y `NEXT_PUBLIC_SITE_URL`. El resto (preferencia, back_urls, webhook handler) ya está implementado en el código. En el **dashboard** solo necesitas las credenciales; el webhook URL y el Secret son opcionales si quieres validar la firma.
 
 ---
 
