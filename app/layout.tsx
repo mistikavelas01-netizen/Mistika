@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/style/globals.css";
 import { Providers } from "./(webapp)/Providers";
-import { getAppBaseUrl } from "@/lib/app-url";
+import { getSiteUrl } from "@/lib/app-url";
 
-const siteUrl = getAppBaseUrl();
+const siteUrl = getSiteUrl();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

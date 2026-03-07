@@ -3,7 +3,6 @@ import "server-only";
 /**
  * Base URL pública según el entorno.
  * Se usa en correos (enlaces a pedidos, etc.), redirecciones y back_urls.
- * Configurar en cada entorno: desarrollo, staging, producción.
  *
  * - Desarrollo: http://localhost:3000
  * - Producción: https://tudominio.com
@@ -37,23 +36,61 @@ function isProduction(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
-export function getAppBaseUrl(): string {
+function assertNotLocalhostInProduction(parsed: URL, source: string): void {
+  if (!isProduction()) return;
+  if (LOCALHOST_HOSTS.has(parsed.hostname)) {
+    throw new Error(`${source} no puede apuntar a localhost en producción.`);
+  }
+}
+
+function resolveSiteUrl(): string {
   const siteUrl = normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL);
   if (siteUrl) {
     const parsed = ensureAbsoluteHttpUrl(siteUrl, "NEXT_PUBLIC_SITE_URL");
-    if (isProduction() && LOCALHOST_HOSTS.has(parsed.hostname)) {
-      throw new Error("NEXT_PUBLIC_SITE_URL no puede apuntar a localhost en producción.");
-    }
+    assertNotLocalhostInProduction(parsed, "NEXT_PUBLIC_SITE_URL");
     return siteUrl;
   }
 
+  const appUrl = normalizeUrl(process.env.NEXT_PUBLIC_APP_URL);
+  if (appUrl) {
+    const parsed = ensureAbsoluteHttpUrl(appUrl, "NEXT_PUBLIC_APP_URL");
+    assertNotLocalhostInProduction(parsed, "NEXT_PUBLIC_APP_URL");
+    return appUrl;
+  }
+
   if (!isProduction()) {
-    const vercelUrl = normalizeUrl(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+    const vercelUrl = normalizeUrl(
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
+    );
     if (vercelUrl) {
       return vercelUrl;
     }
     return DEFAULT_BASE_URL;
   }
 
-  throw new Error("NEXT_PUBLIC_SITE_URL es obligatoria en producción.");
+  throw new Error("NEXT_PUBLIC_SITE_URL o NEXT_PUBLIC_APP_URL es obligatoria en producción.");
+}
+
+export function isAbsoluteHttpUrl(raw: string | undefined): boolean {
+  if (!raw) return false;
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function getSiteUrl(): string {
+  return resolveSiteUrl();
+}
+
+export function getAppBaseUrl(): string {
+  const appUrl = normalizeUrl(process.env.NEXT_PUBLIC_APP_URL);
+  if (appUrl) {
+    const parsed = ensureAbsoluteHttpUrl(appUrl, "NEXT_PUBLIC_APP_URL");
+    assertNotLocalhostInProduction(parsed, "NEXT_PUBLIC_APP_URL");
+    return appUrl;
+  }
+  return resolveSiteUrl();
 }

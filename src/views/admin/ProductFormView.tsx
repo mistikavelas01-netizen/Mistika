@@ -161,7 +161,7 @@ export function ProductFormView() {
         toast.success("Producto creado correctamente");
       }
 
-      router.push("/admin/products");
+      router.replace("/admin/products");
     } catch (error) {
       const message = getApiErrorMessage(error as Parameters<typeof getApiErrorMessage>[0]);
       toast.error(message || "Error al guardar el producto");

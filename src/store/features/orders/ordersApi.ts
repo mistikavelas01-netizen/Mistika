@@ -52,7 +52,16 @@ export const ordersApi = apiSlice.injectEndpoints({
 
     // Fetch order by order number
     fetchOrderByNumber: build.query({
-      query: (orderNumber: string) => `/orders/number/${orderNumber}`,
+      query: ({
+        orderNumber,
+        token,
+        expires,
+      }: {
+        orderNumber: string;
+        token: string;
+        expires: string;
+      }) =>
+        `/orders/number/${orderNumber}?token=${encodeURIComponent(token)}&expires=${encodeURIComponent(expires)}`,
       transformResponse: (response: ApiItemResponse<Order>) => {
         if ("success" in response && response.success && response.data) {
           return { data: response.data };
@@ -62,7 +71,7 @@ export const ordersApi = apiSlice.injectEndpoints({
         }
         return { data: response as Order };
       },
-      providesTags: (result, error, orderNumber) => [{ type: "Orders", id: orderNumber }],
+      providesTags: (result, error, { orderNumber }) => [{ type: "Orders", id: orderNumber }],
     }),
 
     // Fetch order details by ID with token (public access)

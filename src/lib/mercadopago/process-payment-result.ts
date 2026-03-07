@@ -4,7 +4,6 @@ import {
   paymentAttemptsRepo,
   orderDraftsRepo,
   type CheckoutOrderEntity,
-  type OrderDraftEntity,
 } from "@/firebase/repos";
 import { createOrderFromDraft } from "@/lib/order/create-order-from-draft";
 import { mpStatusToCheckoutStatus, isApproved } from "./map-status";
@@ -12,6 +11,8 @@ import { mpStatusToCheckoutStatus, isApproved } from "./map-status";
 export type MpPaymentLike = {
   id?: string | number;
   status?: string;
+  transaction_amount?: number;
+  currency_id?: string;
   external_reference?: string | null;
   metadata?: { preference_id?: string } | null;
   order_id?: string | number | null;
@@ -62,7 +63,24 @@ export async function processPaymentResult(
     };
   }
 
-  const ourStatus = mpStatusToCheckoutStatus(mpStatus);
+  let resolvedStatus = mpStatusToCheckoutStatus(mpStatus);
+  const expectedAmount = Number(checkoutOrder.totalAmount);
+  const paymentAmount = Number(mpPayment?.transaction_amount);
+  const expectedCurrency = String(checkoutOrder.currency ?? "MXN").toUpperCase();
+  const paymentCurrency = String(mpPayment?.currency_id ?? expectedCurrency).toUpperCase();
+  const amountMatches =
+    Number.isFinite(paymentAmount) &&
+    Number.isFinite(expectedAmount) &&
+    Math.abs(paymentAmount - expectedAmount) < 0.01;
+  const currencyMatches = paymentCurrency === expectedCurrency;
+
+  if (isApproved(mpStatus) && (!amountMatches || !currencyMatches)) {
+    resolvedStatus = "FAILED";
+    console.error(
+      `${logPrefix} Payment validation mismatch for checkout ${checkoutOrderId}. ` +
+        `expected=${expectedAmount} ${expectedCurrency}, received=${paymentAmount} ${paymentCurrency}`
+    );
+  }
 
   const existingAttempts = await paymentAttemptsRepo.where(
     "paymentId" as keyof import("@/firebase/repos").PaymentAttemptEntity,
@@ -92,16 +110,24 @@ export async function processPaymentResult(
       preferenceId: preferenceId ?? null,
       paymentId,
       merchantOrderId: merchantOrderId ?? null,
-      status: ourStatus,
+      status: resolvedStatus,
+      raw: mpPayment ? (mpPayment as Record<string, unknown>) : null,
+    });
+  } else {
+    await paymentAttemptsRepo.update(existingAttempts[0]._id!, {
+      checkoutOrderId,
+      preferenceId: preferenceId ?? null,
+      merchantOrderId: merchantOrderId ?? null,
+      status: resolvedStatus,
       raw: mpPayment ? (mpPayment as Record<string, unknown>) : null,
     });
   }
 
   await checkoutOrdersRepo.update(checkoutOrderId, {
-    status: ourStatus,
+    status: resolvedStatus,
   });
 
-  if (isApproved(mpStatus)) {
+  if (isApproved(mpStatus) && resolvedStatus === "APPROVED") {
     const draft = await orderDraftsRepo.getById(checkoutOrder.draftId);
     if (draft?.status === "pending") {
       const created = await createOrderFromDraft(
@@ -148,8 +174,8 @@ export async function processPaymentResult(
   }
 
   return {
-    checkoutOrder: { ...checkoutOrder, status: ourStatus },
-    status: ourStatus,
+    checkoutOrder: { ...checkoutOrder, status: resolvedStatus },
+    status: resolvedStatus,
     orderId: checkoutOrder.convertedOrderId ?? null,
     orderNumber: checkoutOrder.orderNumber ?? null,
     alreadyProcessed: false,

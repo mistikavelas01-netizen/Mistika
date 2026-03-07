@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminsRepo } from "../../_utils/repos";
 import { hashPassword, safeEqual, signAdminToken } from "@/lib/auth/server";
+import { ADMIN_TOKEN_KEY } from "@/lib/auth/shared";
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 
@@ -63,7 +64,16 @@ export const POST = withApiRoute({ route: "/api/auth/login" }, async (request: N
 
     const adminId = admin._id ?? "";
     const token = signAdminToken({ id: adminId, username: admin.username });
-    return NextResponse.json({ token });
+    const response = NextResponse.json({ token });
+    response.cookies.set({
+      name: ADMIN_TOKEN_KEY,
+      value: token,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+    return response;
   } catch (error) {
     logger.error("auth.login_failed", { error });
     return NextResponse.json(

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingBag,
@@ -20,7 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import { useFetchOrdersQuery } from "@/store/features/orders/ordersApi";
 import { ServerError } from "@/components/ui/ServerError";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const statusConfig: Record<
   OrderStatus,
@@ -64,13 +63,39 @@ const statusConfig: Record<
 };
 
 export function OrdersAdminView() {
+  const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
-  const statusParams = params.get("status") || "all";
-
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">(statusParams as OrderStatus | "all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const statusParam = params.get("status");
+  const statusFilter: OrderStatus | "all" =
+    statusParam === "pending" ||
+    statusParam === "processing" ||
+    statusParam === "shipped" ||
+    statusParam === "delivered" ||
+    statusParam === "cancelled"
+      ? statusParam
+      : "all";
+  const pageParam = Number.parseInt(params.get("page") ?? "1", 10);
+  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+  const searchQuery = params.get("q") ?? "";
   const limit = 15;
+
+  const updateQuery = (updates: Record<string, string | null>) => {
+    const nextParams = new URLSearchParams(params.toString());
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value) {
+        nextParams.delete(key);
+      } else {
+        nextParams.set(key, value);
+      }
+    }
+
+    const queryString = nextParams.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  };
 
   const {
     data: ordersData,
@@ -98,9 +123,6 @@ export function OrdersAdminView() {
       order.customerEmail.toLowerCase().includes(query)
     );
   });
-
-  // Stats counts
-  const allOrdersCount = pagination?.total || orders.length;
 
   const formatPrice = (price: number | null | string) => {
     if (price === null || price === undefined) return "—";
@@ -164,8 +186,10 @@ export function OrdersAdminView() {
               <button
                 key={tab.key}
                 onClick={() => {
-                  setStatusFilter(tab.key as OrderStatus | "all");
-                  setPage(1);
+                  updateQuery({
+                    status: tab.key === "all" ? null : tab.key,
+                    page: "1",
+                  });
                 }}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${statusFilter === tab.key
                   ? "bg-black text-white"
@@ -194,12 +218,17 @@ export function OrdersAdminView() {
               type="text"
               placeholder="Buscar por número, nombre o email..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) =>
+                updateQuery({
+                  q: e.target.value || null,
+                  page: "1",
+                })
+              }
               className="w-full rounded-xl border border-black/10 bg-white py-3 pl-11 pr-10 transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => updateQuery({ q: null, page: "1" })}
                 className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-black/40 transition hover:bg-black/5 hover:text-black/70"
               >
                 <X size={18} />
@@ -366,7 +395,7 @@ export function OrdersAdminView() {
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setPage(page - 1)}
+                onClick={() => updateQuery({ page: String(page - 1) })}
                 disabled={!pagination.hasPreviousPage || isLoading}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-black/10 transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-black"
               >
@@ -376,7 +405,7 @@ export function OrdersAdminView() {
                 {page} / {pagination.totalPages}
               </span>
               <button
-                onClick={() => setPage(page + 1)}
+                onClick={() => updateQuery({ page: String(page + 1) })}
                 disabled={!pagination.hasNextPage || isLoading}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-black/10 transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-black"
               >

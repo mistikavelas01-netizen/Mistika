@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminTokenEdge } from "@/lib/auth";
+import { ADMIN_TOKEN_KEY, verifyAdminTokenEdge } from "@/lib/auth";
 
 const ADMIN_SUBDOMAIN = "admin";
 
@@ -12,6 +12,39 @@ function isAdminSubdomain(host: string): boolean {
   const parts = hostname.split(".");
   if (parts.length < 2) return false;
   return parts[0] === ADMIN_SUBDOMAIN;
+}
+
+/**
+ * Construye el host del subdominio admin a partir del host actual.
+ * Ejemplos:
+ * - localhost:3000 -> admin.localhost:3000
+ * - tienda.example.com -> admin.tienda.example.com
+ */
+function getAdminHost(host: string): string | null {
+  const [rawHostname, rawPort] = host.split(":");
+  const hostname = rawHostname?.toLowerCase();
+  if (!hostname) return null;
+
+  if (hostname === "localhost") {
+    return `${ADMIN_SUBDOMAIN}.localhost${rawPort ? `:${rawPort}` : ""}`;
+  }
+
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return null;
+  }
+
+  if (hostname.startsWith(`${ADMIN_SUBDOMAIN}.`)) {
+    return host;
+  }
+
+  return `${ADMIN_SUBDOMAIN}.${hostname}${rawPort ? `:${rawPort}` : ""}`;
+}
+
+function isSafeAdminPath(path: string | null): path is string {
+  if (!path) return false;
+  if (!path.startsWith("/")) return false;
+  if (path.startsWith("//")) return false;
+  return path.startsWith("/admin");
 }
 
 /**
@@ -30,8 +63,15 @@ export function proxy(request: NextRequest) {
     const isAdmin = isAdminSubdomain(host);
 
     if (!isAdmin) {
-      // En dominio raíz: solo redirigir /admin y /login a /. El resto (incl. /cart, /orders, productos) pasa.
+      // En dominio raíz: rutas admin deben ir al subdominio admin para evitar flujos rotos.
       if (pathname.startsWith("/admin") || pathname === "/login") {
+        const adminHost = getAdminHost(host);
+        if (adminHost) {
+          const url = request.nextUrl.clone();
+          url.host = adminHost;
+          return NextResponse.redirect(url);
+        }
+
         const url = request.nextUrl.clone();
         url.pathname = "/";
         return NextResponse.redirect(url);
@@ -40,19 +80,55 @@ export function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
+    const cookieToken = request.cookies.get(ADMIN_TOKEN_KEY)?.value?.trim() ?? "";
+    const auth = cookieToken
+      ? verifyAdminTokenEdge(cookieToken)
+      : { valid: false as const };
+    const redirectToLogin = (nextPath: string) => {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      url.searchParams.set("next", nextPath);
+      return NextResponse.redirect(url);
+    };
+
     if (pathname === "/" || pathname === "") {
+      if (!auth.valid) {
+        return redirectToLogin("/admin");
+      }
       const url = request.nextUrl.clone();
       url.pathname = "/admin";
       return NextResponse.rewrite(url);
     }
-    if (pathname === "/login" || pathname.startsWith("/admin")) {
+
+    if (pathname === "/login") {
+      if (auth.valid) {
+        const nextPath = request.nextUrl.searchParams.get("next");
+        const url = request.nextUrl.clone();
+        url.pathname = isSafeAdminPath(nextPath) ? nextPath : "/admin";
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
       return NextResponse.next();
     }
+
+    if (pathname.startsWith("/admin")) {
+      if (!auth.valid) {
+        const nextPath = `${pathname}${request.nextUrl.search || ""}`;
+        return redirectToLogin(nextPath);
+      }
+      return NextResponse.next();
+    }
+
     if (
       pathname.startsWith("/products") ||
       pathname.startsWith("/orders") ||
       pathname.startsWith("/categories")
     ) {
+      const nextPath = `/admin${pathname}${request.nextUrl.search || ""}`;
+      if (!auth.valid) {
+        return redirectToLogin(nextPath);
+      }
       const url = request.nextUrl.clone();
       url.pathname = `/admin${pathname}`;
       return NextResponse.rewrite(url);
@@ -66,9 +142,8 @@ export function proxy(request: NextRequest) {
   // Rutas que no requieren Bearer token (MP webhook, login, etc.)
   const publicRoutes = [
     "/api/auth/login",
+    "/api/auth/logout",
     "/api/auth/verify",
-    "/api/mail",
-    "/api/cloudinary/sign",
     "/api/webhooks", // POST desde Mercado Pago (URL puede ser /api/webhooks o /api/webhooks/mercadopago)
     "/api/webhooks/mercadopago",
   ];
@@ -80,7 +155,6 @@ export function proxy(request: NextRequest) {
   const isPublicRoute = (() => {
     if (pathname.match(/^\/api\/products(\/[^/]+)?$/) && method === "GET") return true;
     if (pathname.match(/^\/api\/categories(\/[^/]+)?$/) && method === "GET") return true;
-    if (pathname === "/api/orders" && method === "POST") return true;
     if (pathname.match(/^\/api\/orders\/number\/[^/]+$/) && method === "GET") return true;
     if (pathname.match(/^\/api\/orders\/details\/[^/]+$/) && method === "GET") return true;
     // Checkout y pagos: cualquier usuario puede comprar sin token admin

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useGetWebhookQuery } from "@/store/features/webhooks/webhooksApi";
@@ -19,7 +18,6 @@ function formatDate(iso: string) {
 }
 
 export function WebhookDetailView({ id }: { id: string }) {
-  const router = useRouter();
   const { data: item, isLoading, isError, refetch } = useGetWebhookQuery(id);
   const [retryMutation] = useRetryWebhookMutation();
 
@@ -65,7 +63,7 @@ export function WebhookDetailView({ id }: { id: string }) {
         <section className="mb-6 rounded-lg border border-black/10 bg-white p-4">
           <h2 className="mb-2 text-sm font-semibold text-black/80">Acciones</h2>
           <div className="flex flex-wrap gap-2">
-            {item.status === "failed" && <RetryButton eventId={item.id} onRetry={handleRetry} onSuccess={() => { refetch(); router.refresh(); }} />}
+            {item.status === "failed" && <RetryButton eventId={item.id} onRetry={handleRetry} onSuccess={() => { refetch(); }} />}
           </div>
         </section>
         {item.rawPayloadTruncated && (
