@@ -6,6 +6,17 @@ import { withDependency } from "../../../_utils/dependencies";
 import { logger } from "../../../_utils/logger";
 import { withApiRoute } from "../../../_utils/with-api-route";
 
+function normalizeNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function shouldUseBinaryMode(): boolean {
+  const value = normalizeNonEmptyString(process.env.MERCADOPAGO_BINARY_MODE)?.toLowerCase();
+  return value === "true";
+}
+
 /**
  * POST /api/payments/mercadopago/preference
  *
@@ -100,6 +111,21 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
       });
     }
 
+    const payerEmail =
+      normalizeNonEmptyString(body?.payer?.email)?.toLowerCase() ??
+      normalizeNonEmptyString(draft.customerEmail)?.toLowerCase();
+    const payerName =
+      normalizeNonEmptyString(body?.payer?.name) ??
+      normalizeNonEmptyString(draft.customerName);
+
+    if (!payerEmail) {
+      await checkoutOrdersRepo.update(checkoutOrderId, { status: "FAILED" });
+      return NextResponse.json(
+        { success: false, error: "El correo electrónico del comprador es obligatorio para iniciar el pago" },
+        { status: 400 }
+      );
+    }
+
     const returnBase = `${baseUrl}/checkout/return`;
     const preferenceBody = {
       items,
@@ -110,17 +136,19 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
         pending: returnBase,
       },
       auto_return: "approved" as const,
-      payer: body.payer
-        ? {
-            email: body.payer.email ?? draft.customerEmail,
-            name: body.payer.name ?? draft.customerName,
-          }
-        : {
-            email: draft.customerEmail,
-            name: draft.customerName,
-          },
+      payer: {
+        email: payerEmail,
+        ...(payerName ? { name: payerName } : {}),
+      },
+      payment_methods: {
+        excluded_payment_types: [
+          { id: "ticket" },
+          { id: "bank_transfer" },
+          { id: "atm" },
+        ],
+      },
       notification_url: `${baseUrl}/api/webhooks/mercadopago?source_news=webhooks`,
-      binary_mode: true,
+      ...(shouldUseBinaryMode() ? { binary_mode: true } : {}),
     };
 
     const client = getPreferenceClient();

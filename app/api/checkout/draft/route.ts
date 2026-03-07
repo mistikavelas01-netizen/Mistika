@@ -15,6 +15,22 @@ import { withApiRoute } from "../../_utils/with-api-route";
 export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (request: NextRequest) => {
   try {
     const body = (await request.json()) as OrderInput;
+    const customerName = typeof body.customerName === "string" ? body.customerName.trim() : "";
+    if (!customerName) {
+      return NextResponse.json(
+        { success: false, error: "El nombre del cliente es obligatorio" },
+        { status: 400 }
+      );
+    }
+
+    const customerEmail = typeof body.customerEmail === "string" ? body.customerEmail.trim().toLowerCase() : "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!customerEmail || !emailRegex.test(customerEmail)) {
+      return NextResponse.json(
+        { success: false, error: "El correo electrónico del cliente no es válido" },
+        { status: 400 }
+      );
+    }
 
     const rawItems = Array.isArray(body.items) ? body.items : [];
     if (rawItems.length === 0) {
@@ -28,6 +44,21 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
     if (!customerPhone) {
       return NextResponse.json(
         { success: false, error: "El teléfono del cliente es obligatorio" },
+        { status: 400 }
+      );
+    }
+
+    const shippingStreet = typeof body.shippingAddress?.street === "string" ? body.shippingAddress.street.trim() : "";
+    const shippingCity = typeof body.shippingAddress?.city === "string" ? body.shippingAddress.city.trim() : "";
+    const shippingState = typeof body.shippingAddress?.state === "string" ? body.shippingAddress.state.trim() : "";
+    const shippingZip = typeof body.shippingAddress?.zip === "string" ? body.shippingAddress.zip.trim() : "";
+    const shippingCountry = typeof body.shippingAddress?.country === "string"
+      ? body.shippingAddress.country.trim() || "México"
+      : "México";
+
+    if (!shippingStreet || !shippingCity || !shippingState || !shippingZip) {
+      return NextResponse.json(
+        { success: false, error: "La dirección de envío está incompleta" },
         { status: 400 }
       );
     }
@@ -134,8 +165,9 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
       );
     }
 
+    const shippingMethod = typeof body.shippingMethod === "string" ? body.shippingMethod.trim() : "standard";
     const shippingCosts: Record<string, number> = { standard: 80, express: 120, overnight: 500 };
-    const shippingCost = shippingCosts[body.shippingMethod || "standard"] ?? 150;
+    const shippingCost = shippingCosts[shippingMethod] ?? 150;
     const tax = 0;
 
     const orderItemsForCreate = normalizedItems.map((item) => {
@@ -158,22 +190,22 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
       subtotal,
       shippingCost,
       tax,
-      customerName: body.customerName,
-      customerEmail: body.customerEmail,
+      customerName,
+      customerEmail,
       customerPhone,
-      shippingStreet: body.shippingAddress.street,
-      shippingCity: body.shippingAddress.city,
-      shippingState: body.shippingAddress.state,
-      shippingZip: body.shippingAddress.zip,
-      shippingCountry: body.shippingAddress.country ?? "México",
-      billingStreet: body.billingAddress?.street ?? null,
-      billingCity: body.billingAddress?.city ?? null,
-      billingState: body.billingAddress?.state ?? null,
-      billingZip: body.billingAddress?.zip ?? null,
-      billingCountry: body.billingAddress?.country ?? null,
-      shippingMethod: body.shippingMethod ?? "standard",
+      shippingStreet,
+      shippingCity,
+      shippingState,
+      shippingZip,
+      shippingCountry,
+      billingStreet: body.billingAddress?.street?.trim() || null,
+      billingCity: body.billingAddress?.city?.trim() || null,
+      billingState: body.billingAddress?.state?.trim() || null,
+      billingZip: body.billingAddress?.zip?.trim() || null,
+      billingCountry: body.billingAddress?.country?.trim() || null,
+      shippingMethod,
       paymentMethod: "card",
-      notes: body.notes ?? null,
+      notes: body.notes?.trim() || null,
       items: orderItemsForCreate,
     };
 

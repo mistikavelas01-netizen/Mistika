@@ -104,20 +104,29 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
     if (isRedirecting) return;
 
     try {
+      const normalizedCustomerName = formData.customerName.trim();
+      const normalizedCustomerEmail = formData.customerEmail.trim().toLowerCase();
+      const normalizedCustomerPhone = formData.customerPhone.trim();
+      const normalizedShippingStreet = formData.shippingStreet.trim();
+      const normalizedShippingCity = formData.shippingCity.trim();
+      const normalizedShippingState = formData.shippingState.trim();
+      const normalizedShippingZip = formData.shippingZip.trim();
+      const normalizedNotes = formData.notes.trim();
+
       const orderData: OrderInput = {
-        customerName: formData.customerName,
-        customerEmail: formData.customerEmail,
-        customerPhone: formData.customerPhone,
+        customerName: normalizedCustomerName,
+        customerEmail: normalizedCustomerEmail,
+        customerPhone: normalizedCustomerPhone,
         shippingAddress: {
-          street: formData.shippingStreet,
-          city: formData.shippingCity,
-          state: formData.shippingState,
-          zip: formData.shippingZip,
+          street: normalizedShippingStreet,
+          city: normalizedShippingCity,
+          state: normalizedShippingState,
+          zip: normalizedShippingZip,
           country: "México",
         },
         shippingMethod: formData.shippingMethod,
         paymentMethod: "card",
-        notes: formData.notes || undefined,
+        notes: normalizedNotes || undefined,
         items: cart.map((item) => ({
           productId: item.id ?? "",
           quantity: item.quantity || 1,
@@ -135,7 +144,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
         try {
           const prefResult = await createPreference({
             draftId,
-            payer: { email: formData.customerEmail, name: formData.customerName },
+            payer: { email: normalizedCustomerEmail, name: normalizedCustomerName },
           }).unwrap();
 
           const forceSandbox = typeof window !== "undefined" && process.env.NEXT_PUBLIC_MERCADOPAGO_USE_SANDBOX === "true";
