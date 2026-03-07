@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -34,17 +34,23 @@ const statusLabels: Record<OrderStatus, string> = {
 
 export function OrderDetailView() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const orderNumberParam = params?.orderNumber;
   const orderNumber = Array.isArray(orderNumberParam)
     ? orderNumberParam[0]
     : (orderNumberParam ?? "");
+  const token = searchParams.get("token") ?? "";
+  const expires = searchParams.get("expires") ?? "";
 
   const {
     data: orderData,
     isLoading,
     isError,
     error,
-  } = useFetchOrderByNumberQuery(orderNumber, { skip: !orderNumber });
+  } = useFetchOrderByNumberQuery(
+    { orderNumber, token, expires },
+    { skip: !orderNumber || !token || !expires }
+  );
 
   const order = orderData?.data;
   const errorMessage = getApiErrorMessage(error);
@@ -71,6 +77,16 @@ export function OrderDetailView() {
       <main className="min-h-screen bg-white">
         <div className="mx-auto max-w-6xl px-4 py-10">
           <p className="text-neutral-600">Número de pedido inválido.</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!token || !expires) {
+    return (
+      <main className="min-h-screen bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <p className="text-neutral-600">Enlace inválido o expirado.</p>
         </div>
       </main>
     );

@@ -107,7 +107,7 @@ export function CategoryFormView() {
         toast.success("Categoría creada");
       }
 
-      router.push("/admin/categories");
+      router.replace("/admin/categories");
     } catch (error) {
       const message = getApiErrorMessage(error as Parameters<typeof getApiErrorMessage>[0]);
       toast.error(message || "Error al guardar la categoría");

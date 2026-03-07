@@ -124,7 +124,7 @@ export function OrderDetailAdminView() {
     try {
       await deleteOrder(order.id).unwrap();
       toast.success(`Pedido eliminado`);
-      router.push("/admin/orders");
+      router.replace("/admin/orders");
     } catch (err) {
       toast.error(
         getApiErrorMessage(err as Parameters<typeof getApiErrorMessage>[0]) ??

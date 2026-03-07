@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
@@ -34,11 +34,22 @@ const itemVariants = {
 
 export default function AutenticacionView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const redirectTarget = React.useMemo(() => {
+    const next = searchParams.get("next");
+    if (!next || !next.startsWith("/") || next.startsWith("//")) {
+      return "/admin";
+    }
+    if (!next.startsWith("/admin")) {
+      return "/admin";
+    }
+    return next;
+  }, [searchParams]);
 
   React.useEffect(() => {
     const token = getStoredToken();
@@ -47,12 +58,12 @@ export default function AutenticacionView() {
     }
 
     if (isTokenValid(token)) {
-      router.replace("/");
+      router.replace(redirectTarget);
       return;
     }
 
     clearStoredToken();
-  }, [router]);
+  }, [router, redirectTarget]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,8 +94,7 @@ export default function AutenticacionView() {
 
       setStoredToken(data.token);
       toast.success("Sesión iniciada correctamente");
-      router.push("/");
-      router.refresh();
+      router.replace(redirectTarget);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error al iniciar sesión";
       setError(errorMessage);

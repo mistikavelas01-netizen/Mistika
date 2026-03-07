@@ -95,6 +95,9 @@ export const GET = withApiRoute(
 export const POST = withApiRoute(
   { route: "/api/orders" },
   async (request: NextRequest) => {
+    const auth = await requireAdminAuth(request);
+    if (!auth.success) return auth.response;
+
     try {
       const body = (await request.json()) as OrderInput;
 
@@ -120,13 +123,11 @@ export const POST = withApiRoute(
 
       const normalizedItems = rawItems.map((item) => {
         const productId = String(item.productId);
-        const quantity = Math.max(1, Number(item.quantity) || 1);
-        const unitPriceRaw = Number(item.unitPrice);
-        const unitPrice = Number.isFinite(unitPriceRaw) ? unitPriceRaw : 0;
+        const quantityRaw = Number(item.quantity);
+        const quantity = Number.isFinite(quantityRaw) ? Math.floor(quantityRaw) : 0;
         return {
           productId,
           quantity,
-          unitPrice,
           productName:
             typeof item.productName === "string" ? item.productName : "",
         };
@@ -138,6 +139,19 @@ export const POST = withApiRoute(
           {
             success: false,
             error: "Producto inválido en los artículos del pedido",
+          },
+          { status: 400 },
+        );
+      }
+
+      const invalidQuantities = normalizedItems.filter(
+        (item) => !Number.isInteger(item.quantity) || item.quantity <= 0,
+      );
+      if (invalidQuantities.length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Cantidad inválida en uno o más artículos",
           },
           { status: 400 },
         );
@@ -223,10 +237,33 @@ export const POST = withApiRoute(
         );
       }
 
-      const subtotal = normalizedItems.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0,
-      );
+      const resolveUnitPrice = (product: NonNullable<(typeof products)[number]>) => {
+        if (product.isOnSale && typeof product.discountPrice === "number") {
+          return product.discountPrice;
+        }
+        if (typeof product.price === "number") {
+          return product.price;
+        }
+        return null;
+      };
+
+      const productsWithoutPrice = productIds.filter((id) => {
+        const product = productMap.get(id);
+        if (!product) return true;
+        const unitPrice = resolveUnitPrice(product);
+        return unitPrice == null || unitPrice < 0;
+      });
+      if (productsWithoutPrice.length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Algunos productos no tienen precio válido",
+            productIds: productsWithoutPrice,
+          },
+          { status: 400 },
+        );
+      }
+
       const shippingCosts: Record<string, number> = {
         standard: 80.0,
         express: 120.0,
@@ -235,7 +272,6 @@ export const POST = withApiRoute(
       const shippingCost =
         shippingCosts[body.shippingMethod || "standard"] ?? 150.0;
       const tax = 0;
-      const totalAmount = subtotal + shippingCost;
 
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
@@ -244,14 +280,20 @@ export const POST = withApiRoute(
 
       const orderItemsForCreate = normalizedItems.map((item) => {
         const product = productMap.get(item.productId);
+        const unitPrice = product ? resolveUnitPrice(product) : null;
         return {
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.unitPrice * item.quantity,
+          unitPrice: unitPrice ?? 0,
+          totalPrice: (unitPrice ?? 0) * item.quantity,
           productName: product?.name ?? item.productName ?? "",
         };
       });
+      const subtotal = orderItemsForCreate.reduce(
+        (sum, item) => sum + item.totalPrice,
+        0,
+      );
+      const totalAmount = subtotal + shippingCost;
 
       // Decrement stock (best-effort; no transaction in Firestore)
       for (const entry of groupedItems.values()) {

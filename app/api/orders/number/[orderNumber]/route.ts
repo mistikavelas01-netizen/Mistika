@@ -6,6 +6,7 @@ import {
   categoriesRepo,
   toApiEntity,
 } from "../../../_utils/repos";
+import { verifyOrderToken } from "@/lib/order-token";
 import { logger } from "../../../_utils/logger";
 import { withApiRoute } from "../../../_utils/with-api-route";
 
@@ -46,6 +47,17 @@ export const GET = withApiRoute(
   async (request: NextRequest, { params }: { params: Promise<{ orderNumber: string }> }) => {
   try {
     const { orderNumber } = await params;
+    const token = request.nextUrl.searchParams.get("token");
+    const expires = request.nextUrl.searchParams.get("expires");
+    if (!token || !expires) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Token requerido para acceder a los detalles del pedido",
+        },
+        { status: 401 }
+      );
+    }
 
     const orders = await ordersRepo.where("orderNumber", "==", orderNumber);
     const order = orders[0] ?? null;
@@ -54,6 +66,16 @@ export const GET = withApiRoute(
       return NextResponse.json(
         { success: false, error: "Pedido no encontrado" },
         { status: 404 }
+      );
+    }
+
+    if (!order._id || !verifyOrderToken(order._id, token, expires)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Token inválido o no autorizado para este pedido",
+        },
+        { status: 403 }
       );
     }
 

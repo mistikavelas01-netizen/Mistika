@@ -12,6 +12,7 @@ type VerifyResult = {
   success: boolean;
   orderId: string | null;
   orderNumber: string | null;
+  orderAccess?: { token: string; expiresAt: number } | null;
   status: string;
   detail?: string;
   canRetry: boolean;
@@ -79,6 +80,7 @@ function CheckoutReturnContent() {
           success: data.success ?? false,
           orderId: data.orderId ?? null,
           orderNumber: data.orderNumber ?? null,
+          orderAccess: data.orderAccess ?? null,
           status: data.status ?? "unknown",
           detail: data.detail ?? data.error,
           canRetry: data.canRetry ?? false,
@@ -108,12 +110,19 @@ function CheckoutReturnContent() {
 
     redirectedRef.current = true;
 
-    if (result.status === "APPROVED" && result.orderNumber) {
+    if (
+      result.status === "APPROVED" &&
+      result.orderNumber &&
+      result.orderAccess?.token &&
+      typeof result.orderAccess.expiresAt === "number"
+    ) {
       if (!clearedCartRef.current) {
         clearedCartRef.current = true;
         clearCart();
       }
-      router.replace(`/orders/${result.orderNumber}`);
+      const token = encodeURIComponent(result.orderAccess.token);
+      const expires = encodeURIComponent(String(result.orderAccess.expiresAt));
+      router.replace(`/orders/${result.orderNumber}?token=${token}&expires=${expires}`);
       return;
     }
 

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
-import { getAppBaseUrl } from "@/lib/app-url";
+import { getSiteUrl } from "@/lib/app-url";
 
-const siteUrl = getAppBaseUrl();
+const siteUrl = getSiteUrl();
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -12,18 +12,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
-    },
-    {
-      url: `${siteUrl}/shop`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${siteUrl}/cart`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.3,
     },
   ];
 }

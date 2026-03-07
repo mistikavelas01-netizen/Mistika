@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { CldUploadWidget, CloudinaryUploadWidgetResults } from "next-cloudinary";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { getStoredToken } from "@/lib/auth/client";
 
 interface CloudinaryUploadWidgetProps {
   onUploadSuccess: (url: string) => void;
@@ -45,7 +46,6 @@ export function CloudinaryUploadWidget({
   return (
     <div className={`space-y-4 ${className}`}>
       <CldUploadWidget
-        signatureEndpoint="/api/cloudinary/sign"
         options={{
           folder,
           maxFiles: 1,
@@ -79,6 +79,35 @@ export function CloudinaryUploadWidget({
                 active: true,
               },
             },
+          },
+          uploadSignature: (
+            callback: (signature: string | null, error?: unknown) => void,
+            paramsToSign: Record<string, string | number>
+          ) => {
+            const token = getStoredToken();
+            if (!token) {
+              callback(null, new Error("No autorizado"));
+              return;
+            }
+
+            fetch("/api/cloudinary/sign", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ paramsToSign }),
+            })
+              .then(async (response) => {
+                const data = (await response.json()) as { signature?: string; error?: string };
+                if (!response.ok || !data.signature) {
+                  throw new Error(data.error || "No se pudo firmar la subida");
+                }
+                callback(data.signature);
+              })
+              .catch((error: unknown) => {
+                callback(null, error);
+              });
           },
         }}
         onSuccess={handleSuccess}

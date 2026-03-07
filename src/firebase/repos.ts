@@ -29,6 +29,7 @@ export const COLLECTIONS = {
   ADMINS: "admins",
   CATEGORIES: "categories",
   PRODUCTS: "products",
+  CAROUSEL_ITEMS: "carousel_items",
   ORDERS: "orders",
   ORDER_ITEMS: "order_items",
   ORDER_DRAFTS: "order_drafts",
@@ -98,6 +99,12 @@ export interface ProductEntity extends FirebaseEntity {
   slug?: string | null;
   categoryId: string;
   stock: number;
+  isActive: boolean;
+}
+
+export interface CarouselItemEntity extends FirebaseEntity {
+  name?: string | null;
+  imageUrl: string;
   isActive: boolean;
 }
 
@@ -226,6 +233,7 @@ export interface OrderDraftEntity extends FirebaseEntity {
 export const adminsRepo = new FirebaseRepository<AdminEntity>(COLLECTIONS.ADMINS);
 export const categoriesRepo = new FirebaseRepository<CategoryEntity>(COLLECTIONS.CATEGORIES);
 export const productsRepo = new FirebaseRepository<ProductEntity>(COLLECTIONS.PRODUCTS);
+export const carouselItemsRepo = new FirebaseRepository<CarouselItemEntity>(COLLECTIONS.CAROUSEL_ITEMS);
 export const ordersRepo = new FirebaseRepository<OrderEntity>(COLLECTIONS.ORDERS);
 export const orderItemsRepo = new FirebaseRepository<OrderItemEntity>(COLLECTIONS.ORDER_ITEMS);
 export const orderDraftsRepo = new FirebaseRepository<OrderDraftEntity>(COLLECTIONS.ORDER_DRAFTS);

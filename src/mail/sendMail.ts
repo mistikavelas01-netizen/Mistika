@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Resend mail sender
  * Uses Resend API via SDK

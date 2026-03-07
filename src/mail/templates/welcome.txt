@@ -6,7 +6,7 @@ Estamos emocionados de tenerte con nosotros. Tu cuenta ha sido creada exitosamen
 
 En Mistika encontrarás productos cuidadosamente seleccionados para transformar tu espacio en calma, aroma y presencia.
 
-Explora nuestros productos: https://mistika.com
+Explora nuestros productos: {{siteUrl}}
 
 Si tienes alguna pregunta, no dudes en contactarnos.
 

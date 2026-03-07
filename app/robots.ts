@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
-import { getAppBaseUrl } from "@/lib/app-url";
+import { getSiteUrl } from "@/lib/app-url";
 
-const siteUrl = getAppBaseUrl();
+const siteUrl = getSiteUrl();
 
 export default function robots(): MetadataRoute.Robots {
   return {

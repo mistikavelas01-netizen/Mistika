@@ -4,6 +4,7 @@ import { z } from "zod";
 import { withDependency } from "../_utils/dependencies";
 import { logger } from "../_utils/logger";
 import { withApiRoute } from "../_utils/with-api-route";
+import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 /**
  * Validation schemas for each mail type
@@ -76,6 +77,9 @@ const mailRequestSchema = z.discriminatedUnion("type", [
  * Send transactional email via Resend
  */
 export const POST = withApiRoute({ route: "/api/mail" }, async (request: NextRequest) => {
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) return auth.response;
+
   try {
     // Parse and validate request body
     const body = await request.json();
@@ -147,7 +151,10 @@ export const POST = withApiRoute({ route: "/api/mail" }, async (request: NextReq
  * GET /api/mail
  * Health check endpoint
  */
-export const GET = withApiRoute({ route: "/api/mail" }, async () => {
+export const GET = withApiRoute({ route: "/api/mail" }, async (request: NextRequest) => {
+  const auth = await requireAdminAuth(request);
+  if (!auth.success) return auth.response;
+
   return NextResponse.json({
     service: "Mail API",
     status: "operational",

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { LandingPageView } from "@/views/home/LandingPageView";
-import { getAppBaseUrl } from "@/lib/app-url";
+import { getSiteUrl } from "@/lib/app-url";
 
-const siteUrl = getAppBaseUrl();
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   title: "MISTIKA | Velas artesanales",
