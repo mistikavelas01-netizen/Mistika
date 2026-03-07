@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
@@ -12,8 +12,6 @@ import {
   Mail,
   Phone,
   Truck,
-  Trash2,
-  AlertTriangle,
   ChevronDown,
   ChevronUp,
   CreditCard,
@@ -28,7 +26,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   useFetchOrderQuery,
   useUpdateOrderMutation,
-  useDeleteOrderMutation,
 } from "@/store/features/orders/ordersApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 import toast from "react-hot-toast";
@@ -78,7 +75,6 @@ const lockedStatuses = new Set<OrderStatus>(["delivered", "cancelled"]);
 
 export function OrderDetailAdminView() {
   const params = useParams();
-  const router = useRouter();
   const idParam = params?.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam ?? "";
 
@@ -90,8 +86,6 @@ export function OrderDetailAdminView() {
   } = useFetchOrderQuery(id, { skip: !id });
 
   const [updateOrder, { isLoading: isUpdating }] = useUpdateOrderMutation();
-  const [deleteOrder, { isLoading: isDeleting }] = useDeleteOrderMutation();
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [showLockedStatusInfo, setShowLockedStatusInfo] = useState(false);
 
@@ -115,20 +109,6 @@ export function OrderDetailAdminView() {
       toast.error(
         getApiErrorMessage(err as Parameters<typeof getApiErrorMessage>[0]) ??
           "Error al actualizar el estado",
-      );
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!order) return;
-    try {
-      await deleteOrder(order.id).unwrap();
-      toast.success(`Pedido eliminado`);
-      router.replace("/admin/orders");
-    } catch (err) {
-      toast.error(
-        getApiErrorMessage(err as Parameters<typeof getApiErrorMessage>[0]) ??
-          "Error al eliminar el pedido",
       );
     }
   };
@@ -245,14 +225,6 @@ export function OrderDetailAdminView() {
                 {formatDate(order.createdAt)}
               </div>
             </div>
-
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
-            >
-              <Trash2 size={16} />
-              Eliminar
-            </button>
           </div>
         </motion.div>
 
@@ -684,56 +656,6 @@ export function OrderDetailAdminView() {
                     </div>
                   );
                 })()}
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* Delete Modal */}
-        <AnimatePresence>
-          {showDeleteModal && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-                onClick={() => setShowDeleteModal(false)}
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 px-4"
-              >
-                <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl">
-                  <div className="p-6 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-                      <AlertTriangle size={28} className="text-red-500" />
-                    </div>
-                    <h3 className="mb-2 text-xl font-semibold">Eliminar pedido</h3>
-                    <p className="text-sm text-black/60">
-                      ¿Eliminar{" "}
-                      <span className="font-semibold">{order.orderNumber}</span>?
-                      Esta acción no se puede deshacer.
-                    </p>
-                  </div>
-                  <div className="flex border-t border-black/10">
-                    <button
-                      onClick={() => setShowDeleteModal(false)}
-                      className="flex-1 border-r border-black/10 py-3 font-medium text-black/70 transition hover:bg-black/5"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="flex-1 py-3 font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {isDeleting ? "Eliminando..." : "Eliminar"}
-                    </button>
-                  </div>
-                </div>
               </motion.div>
             </>
           )}

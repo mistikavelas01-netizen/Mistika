@@ -7,6 +7,7 @@ import {
   toApiEntity,
 } from "../../../_utils/repos";
 import { verifyOrderToken } from "@/lib/order-token";
+import { isAdminRequest } from "@/lib/auth/api-helper";
 import { logger } from "../../../_utils/logger";
 import { withApiRoute } from "../../../_utils/with-api-route";
 
@@ -47,10 +48,11 @@ export const GET = withApiRoute(
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const { id } = await params;
+      const adminAccess = isAdminRequest(request);
 
       const token = request.nextUrl.searchParams.get("token");
       const expires = request.nextUrl.searchParams.get("expires");
-      if (!token || !expires) {
+      if (!adminAccess && (!token || !expires)) {
         return NextResponse.json(
           {
             success: false,
@@ -60,7 +62,7 @@ export const GET = withApiRoute(
         );
       }
 
-      if (!verifyOrderToken(id, token, expires)) {
+      if (!adminAccess && !verifyOrderToken(id, token!, expires!)) {
         return NextResponse.json(
           {
             success: false,

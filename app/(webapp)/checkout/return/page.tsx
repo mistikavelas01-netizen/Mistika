@@ -43,15 +43,8 @@ function CheckoutReturnContent() {
     const merchantOrderId = searchParams.get("merchant_order_id") ?? "";
 
     if (!paymentId && !preferenceId) {
-      setResult({
-        success: false,
-        orderId: null,
-        orderNumber: null,
-        status: "unknown",
-        detail: "No se recibieron datos de retorno de Mercado Pago.",
-        canRetry: true,
-        nextAction: "retry_checkout",
-      });
+      setReturnToast("error", "No se recibieron datos de retorno de Mercado Pago.");
+      router.replace("/cart");
       return;
     }
 
@@ -102,7 +95,7 @@ function CheckoutReturnContent() {
       });
 
     return () => clearTimeout(timeoutId);
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   // Una sola pantalla de carga; al tener resultado redirigir de inmediato (sin vistas intermedias)
   useEffect(() => {
@@ -112,7 +105,7 @@ function CheckoutReturnContent() {
 
     if (
       result.status === "APPROVED" &&
-      result.orderNumber &&
+      result.orderId &&
       result.orderAccess?.token &&
       typeof result.orderAccess.expiresAt === "number"
     ) {
@@ -122,7 +115,8 @@ function CheckoutReturnContent() {
       }
       const token = encodeURIComponent(result.orderAccess.token);
       const expires = encodeURIComponent(String(result.orderAccess.expiresAt));
-      router.replace(`/orders/${result.orderNumber}?token=${token}&expires=${expires}`);
+      const safeOrderId = encodeURIComponent(result.orderId);
+      router.replace(`/orders/details/${safeOrderId}?token=${token}&expires=${expires}`);
       return;
     }
 

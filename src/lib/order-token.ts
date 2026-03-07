@@ -50,7 +50,7 @@ export function verifyOrderToken(
 // Generar URL completa para el correo
 export function generateOrderDetailUrl(
   orderId: string,
-  orderNumber: string,
+  _orderNumber?: string,
   baseUrl?: string
 ): string {
   const { token, expiresAt } = generateOrderToken(orderId);
@@ -58,5 +58,5 @@ export function generateOrderDetailUrl(
 
   return `${url}/orders/details/${orderId}?token=${encodeURIComponent(
     token
-  )}&expires=${expiresAt}&orderNumber=${encodeURIComponent(orderNumber)}`;
+  )}&expires=${expiresAt}`;
 }
