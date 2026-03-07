@@ -9,6 +9,7 @@
 /// <reference path="./cart.d.ts" />
 /// <reference path="./common.d.ts" />
 /// <reference path="./category.d.ts" />
+/// <reference path="./carousel.d.ts" />
 /// <reference path="./order.d.ts" />
 /// <reference path="./api.d.ts" />
 /// <reference path="./auth.d.ts" />

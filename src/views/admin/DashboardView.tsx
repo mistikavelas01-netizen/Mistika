@@ -19,6 +19,7 @@ import {
   Eye,
   Home,
   Webhook,
+  Image as ImageIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
@@ -442,6 +443,26 @@ export function DashboardView() {
                     Nueva
                   </Link>
                 </div>
+              </div>
+
+              {/* Carousel */}
+              <div className="flex flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+                <div className="flex flex-1 items-center gap-4 border-b border-black/10 p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black/5">
+                    <ImageIcon size={24} className="text-black/70" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Carrusel</h3>
+                    <p className="text-sm text-black/60">Fotos del inicio</p>
+                  </div>
+                </div>
+                <Link
+                  href="/admin/carousel"
+                  className="flex items-center justify-center gap-2 py-4 text-sm font-medium text-black/70 transition hover:bg-black hover:text-white"
+                >
+                  <Eye size={16} />
+                  Gestionar
+                </Link>
               </div>
 
               {/* Webhooks */}

@@ -28,6 +28,7 @@ const wrapRepo = <T extends RepoBaseEntity>(repo: FirebaseRepository<T>, name: s
 export const adminsRepo = wrapRepo(baseRepos.adminsRepo, "admins");
 export const categoriesRepo = wrapRepo(baseRepos.categoriesRepo, "categories");
 export const productsRepo = wrapRepo(baseRepos.productsRepo, "products");
+export const carouselItemsRepo = wrapRepo(baseRepos.carouselItemsRepo, "carousel_items");
 export const ordersRepo = wrapRepo(baseRepos.ordersRepo, "orders");
 export const orderItemsRepo = wrapRepo(baseRepos.orderItemsRepo, "order_items");
 export const orderDraftsRepo = wrapRepo(baseRepos.orderDraftsRepo, "order_drafts");
@@ -42,6 +43,7 @@ export type {
   AdminEntity,
   CategoryEntity,
   ProductEntity,
+  CarouselItemEntity,
   OrderEntity,
   OrderItemEntity,
   OrderDraftEntity,
