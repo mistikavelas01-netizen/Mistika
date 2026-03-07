@@ -27,6 +27,7 @@ import { useFetchOrdersQuery } from "@/store/features/orders/ordersApi";
 import { clearStoredToken } from "@/lib/auth/client";
 import { ServerError } from "@/components/ui/ServerError";
 import toast from "react-hot-toast";
+import { getStoreUrlFromBrowser } from "@/lib/site-url-client";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -58,19 +59,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; bg: stri
 
 /** URL del sitio de ventas (dominio raíz). Desde admin.dominio debe ir a dominio. */
 function useStoreUrl(): string {
-  return useMemo(() => {
-    if (typeof process.env.NEXT_PUBLIC_SITE_URL === "string" && process.env.NEXT_PUBLIC_SITE_URL) {
-      return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "") || "/";
-    }
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname;
-      if (hostname.startsWith("admin.")) {
-        const mainHost = hostname.slice(6);
-        return `${window.location.protocol}//${mainHost}${window.location.port ? `:${window.location.port}` : ""}`;
-      }
-    }
-    return "/";
-  }, []);
+  return useMemo(() => getStoreUrlFromBrowser(), []);
 }
 
 export function DashboardView() {
@@ -110,8 +99,13 @@ export function DashboardView() {
   // Orders that need attention (pending + processing)
   const ordersNeedingAttention = pendingOrders + processingOrders;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearStoredToken();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Si falla el request, continuamos limpiando sesión local.
+    }
     toast.success("Sesión cerrada");
     router.replace("/login");
   };

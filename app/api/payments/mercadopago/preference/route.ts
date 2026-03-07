@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPreferenceClient, isMercadoPagoConfigured } from "@/lib/mercadopago/client";
 import { orderDraftsRepo, checkoutOrdersRepo } from "../../../_utils/repos";
-import { getAppBaseUrl } from "@/lib/app-url";
+import { getAppBaseUrl, isAbsoluteHttpUrl } from "@/lib/app-url";
 import { withDependency } from "../../../_utils/dependencies";
 import { logger } from "../../../_utils/logger";
 import { withApiRoute } from "../../../_utils/with-api-route";
@@ -54,14 +54,13 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
     }
 
     const baseUrl = getAppBaseUrl();
-    const isAbsoluteUrl = baseUrl.startsWith("http://") || baseUrl.startsWith("https://");
-    if (!baseUrl || !isAbsoluteUrl) {
+    if (!baseUrl || !isAbsoluteHttpUrl(baseUrl)) {
       logger.error("mp.preference_invalid_base_url", { baseUrl });
       return NextResponse.json(
         {
           success: false,
           error:
-            "Configura NEXT_PUBLIC_APP_URL o VERCEL_URL con una URL absoluta (ej. https://tudominio.com o http://localhost:3000)",
+            "Configura NEXT_PUBLIC_APP_URL o NEXT_PUBLIC_SITE_URL con una URL absoluta (ej. https://tudominio.com o http://localhost:3000)",
         },
         { status: 500 }
       );

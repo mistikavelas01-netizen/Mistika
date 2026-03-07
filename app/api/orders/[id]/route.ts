@@ -121,8 +121,11 @@ export const PUT = withApiRoute(
         body.status !== currentOrder.status &&
         statusesToNotify.includes(body.status)
       ) {
-        const { getAppBaseUrl } = await import("@/lib/app-url");
-        const orderUrl = `${getAppBaseUrl()}/orders/${updated!.orderNumber}`;
+        const { generateOrderDetailUrl } = await import("@/lib/order-token");
+        const orderUrl = generateOrderDetailUrl(
+          updated!._id!,
+          updated!.orderNumber
+        );
         const emailPayload: OrderStatusPayload = {
           name: currentOrder.customerName,
           orderNumber: updated!.orderNumber,

@@ -39,6 +39,24 @@ const shippingOptions = [
   },
 ] as const;
 
+const MERCADO_PAGO_ALLOWED_HOSTS = [
+  "mercadopago.com",
+  "mercadopago.com.mx",
+];
+
+function isTrustedMercadoPagoUrl(rawUrl: string): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== "https:") return false;
+    const hostname = parsed.hostname.toLowerCase();
+    return MERCADO_PAGO_ALLOWED_HOSTS.some(
+      (allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function CheckoutForm({ totalPrice, onClose }: Props) {
   const router = useRouter();
   const { cart } = useCart();
@@ -71,6 +89,15 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
   const shippingCost =
     shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
   const totalAmount = totalPrice + shippingCost;
+  const navigateToCartFallback = () => {
+    onClose();
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname !== "/cart"
+    ) {
+      router.replace("/cart?checkout=error");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +148,9 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
             : prefResult?.data?.init_point ?? prefResult?.data?.sandbox_init_point;
 
           if (initPoint) {
+            if (!isTrustedMercadoPagoUrl(initPoint)) {
+              throw new Error("La URL de pago recibida no es válida.");
+            }
             const isSandboxUrl = initPoint.includes("mercadopago");
             if (typeof console !== "undefined" && console.info) {
               console.info(
@@ -135,16 +165,23 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
               );
             }
             toast.success("Redirigiendo a Mercado Pago…");
-            window.location.assign(initPoint);
+            window.location.replace(initPoint);
             return;
           }
         } catch (prefError) {
           console.warn("[Checkout] Mercado Pago preference failed:", prefError);
-          toast.error("No se pudo conectar con Mercado Pago. Intenta de nuevo.");
+          const message = getApiErrorMessage(
+            prefError as Parameters<typeof getApiErrorMessage>[0]
+          );
+          toast.error(message || "No se pudo conectar con Mercado Pago. Intenta de nuevo.");
           setIsRedirecting(false);
+          navigateToCartFallback();
+          return;
         }
 
-        router.push("/cart");
+        toast.error("No se pudo generar el enlace de pago. Intenta de nuevo.");
+        setIsRedirecting(false);
+        navigateToCartFallback();
       }
     } catch (error) {
       const message = getApiErrorMessage(error as Parameters<typeof getApiErrorMessage>[0]);

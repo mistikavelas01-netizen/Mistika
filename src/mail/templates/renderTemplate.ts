@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Template renderer
  * Replaces variables in templates
@@ -6,6 +8,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { MailPayload, OrderConfirmationPayload } from "../types";
+import { getSiteUrl } from "@/lib/app-url";
 
 /**
  * Read template file from disk
@@ -92,6 +95,9 @@ function formatPrice(price: number | string): string {
  */
 function replaceVariables(template: string, payload: MailPayload): string {
   let result = template;
+  const siteUrl = getSiteUrl();
+
+  result = result.replace(/\{\{siteUrl\}\}/g, siteUrl);
 
   // Replace common variables
   if ("name" in payload && payload.name) {
