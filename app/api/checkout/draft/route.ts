@@ -6,6 +6,8 @@ import {
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 
+const MIN_PURCHASE_AMOUNT = 5;
+
 function isFreeShippingEnabled(): boolean {
   return process.env.NEXT_PUBLIC_FREE_SHIPPING_ENABLED?.trim().toLowerCase() === "true";
 }
@@ -187,6 +189,18 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
     });
     const subtotal = orderItemsForCreate.reduce((sum, item) => sum + item.totalPrice, 0);
     const totalAmount = subtotal + shippingCost;
+
+    if (totalAmount < MIN_PURCHASE_AMOUNT) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `La compra mínima es de $${MIN_PURCHASE_AMOUNT} MXN.`,
+          minimumAmount: MIN_PURCHASE_AMOUNT,
+          totalAmount,
+        },
+        { status: 400 }
+      );
+    }
 
     const draftData = {
       status: "pending" as const,

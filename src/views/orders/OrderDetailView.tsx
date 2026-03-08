@@ -308,11 +308,11 @@ export function OrderDetailView() {
                     className="mt-0.5 text-black/60"
                     aria-hidden="true"
                   />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs uppercase tracking-[0.2em] text-black/50">
                       Email
                     </p>
-                    <p className="font-medium text-black/90">
+                    <p className="break-all font-medium text-black/90">
                       {order.customerEmail}
                     </p>
                   </div>

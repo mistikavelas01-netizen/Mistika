@@ -22,6 +22,7 @@ import { getProductImageUrl } from "@/constant";
 
 const CHECKOUT_RETURN_TOAST_KEY = "checkout_return_toast";
 const FREE_SHIPPING_ENABLED = process.env.NEXT_PUBLIC_FREE_SHIPPING_ENABLED === "true";
+const MIN_PURCHASE_AMOUNT = 5;
 
 export function CartPage() {
   const {
@@ -58,6 +59,14 @@ export function CartPage() {
 
   const shippingCost = FREE_SHIPPING_ENABLED ? 0 : 80;
   const finalTotal = totalPrice + shippingCost;
+  const isBelowMinimum = finalTotal < MIN_PURCHASE_AMOUNT;
+  const handleOpenCheckout = () => {
+    if (isBelowMinimum) {
+      toast.error(`La compra mínima es de $${MIN_PURCHASE_AMOUNT} MXN.`);
+      return;
+    }
+    setShowCheckout(true);
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
@@ -287,14 +296,20 @@ export function CartPage() {
                       <span className="text-2xl font-bold">${finalTotal.toFixed(2)}</span>
                     </div>
                     <p className="mt-1 text-xs text-black/50">MXN, impuestos incluidos</p>
+                    {isBelowMinimum ? (
+                      <p className="mt-2 text-xs font-medium text-red-600">
+                        La compra mínima es de ${MIN_PURCHASE_AMOUNT} MXN.
+                      </p>
+                    ) : null}
                   </div>
 
                   <button
-                    onClick={() => setShowCheckout(true)}
-                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-black py-4 font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg"
+                    onClick={handleOpenCheckout}
+                    disabled={isBelowMinimum}
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-black py-4 font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                   >
                     <CreditCard size={18} />
-                    Continuar al pago
+                    {isBelowMinimum ? "Compra mínima $5 MXN" : "Continuar al pago"}
                   </button>
 
                   <p className="mt-4 text-center text-xs text-black/50">
