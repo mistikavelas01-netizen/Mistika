@@ -44,6 +44,7 @@ const MERCADO_PAGO_ALLOWED_HOSTS = [
   "mercadopago.com.mx",
 ];
 const FREE_SHIPPING_ENABLED = process.env.NEXT_PUBLIC_FREE_SHIPPING_ENABLED === "true";
+const MIN_PURCHASE_AMOUNT = 5;
 
 function isTrustedMercadoPagoUrl(rawUrl: string): boolean {
   try {
@@ -91,6 +92,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
     ? 0
     : shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
   const totalAmount = totalPrice + shippingCost;
+  const isBelowMinimum = totalAmount < MIN_PURCHASE_AMOUNT;
   const navigateToCartFallback = () => {
     onClose();
     if (
@@ -104,6 +106,10 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isRedirecting) return;
+    if (isBelowMinimum) {
+      toast.error(`La compra mínima es de $${MIN_PURCHASE_AMOUNT} MXN.`);
+      return;
+    }
 
     try {
       const normalizedCustomerName = formData.customerName.trim();
@@ -201,6 +207,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
   };
 
   const isLoadingOrRedirecting = isCreatingDraft || isCreatingPreference || isRedirecting;
+  const isSubmitDisabled = isLoadingOrRedirecting || isBelowMinimum;
 
   // Mismo modal, solo cambia el contenido: sin overlay que se superponga
   if (isRedirecting) {
@@ -420,6 +427,11 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
                 <span className="text-xl font-bold">${totalAmount.toFixed(2)} MXN</span>
               </div>
             </div>
+            {isBelowMinimum ? (
+              <p className="text-xs font-medium text-red-600">
+                La compra mínima es de ${MIN_PURCHASE_AMOUNT} MXN.
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -463,7 +475,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
         </button>
         <button
           type="submit"
-          disabled={isLoadingOrRedirecting}
+          disabled={isSubmitDisabled}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoadingOrRedirecting ? (
@@ -471,6 +483,8 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
               <Loader2 size={18} className="animate-spin" />
               {isRedirecting ? "Redirigiendo…" : "Procesando…"}
             </>
+          ) : isBelowMinimum ? (
+            <>Compra mínima $5 MXN</>
           ) : (
             <>
               Pagar con Mercado Pago
