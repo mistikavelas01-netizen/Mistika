@@ -6,6 +6,8 @@ import { withDependency } from "../../../_utils/dependencies";
 import { logger } from "../../../_utils/logger";
 import { withApiRoute } from "../../../_utils/with-api-route";
 
+const MIN_PURCHASE_AMOUNT = 5;
+
 function normalizeNonEmptyString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim();
@@ -15,6 +17,14 @@ function normalizeNonEmptyString(value: unknown): string | null {
 function shouldUseBinaryMode(): boolean {
   const value = normalizeNonEmptyString(process.env.MERCADOPAGO_BINARY_MODE)?.toLowerCase();
   return value === "true";
+}
+
+function shouldExcludePrepaidCards(): boolean {
+  const value = normalizeNonEmptyString(process.env.MERCADOPAGO_EXCLUDE_PREPAID)?.toLowerCase();
+  if (value === "true") return true;
+  if (value === "false") return false;
+  // In sandbox/test mode some test cards can be classified as prepaid.
+  return process.env.NODE_ENV === "production";
 }
 
 /**
@@ -64,6 +74,19 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
       );
     }
 
+    const draftTotalAmount = Number(draft.totalAmount);
+    if (!Number.isFinite(draftTotalAmount) || draftTotalAmount < MIN_PURCHASE_AMOUNT) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `La compra mínima es de $${MIN_PURCHASE_AMOUNT} MXN.`,
+          minimumAmount: MIN_PURCHASE_AMOUNT,
+          totalAmount: Number.isFinite(draftTotalAmount) ? draftTotalAmount : 0,
+        },
+        { status: 400 }
+      );
+    }
+
     const baseUrl = getAppBaseUrl();
     if (!baseUrl || !isAbsoluteHttpUrl(baseUrl)) {
       logger.error("mp.preference_invalid_base_url", { baseUrl });
@@ -86,7 +109,7 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
       convertedOrderId: null,
       orderNumber: null,
       currency: "MXN",
-      totalAmount: draft.totalAmount,
+      totalAmount: draftTotalAmount,
     });
     const checkoutOrderId = checkoutOrder._id!;
 
@@ -127,6 +150,14 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
     }
 
     const returnBase = `${baseUrl}/checkout/return`;
+    const excludedPaymentTypes = [
+      { id: "ticket" },
+      { id: "bank_transfer" },
+      { id: "atm" },
+      { id: "digital_currency" },
+      ...(shouldExcludePrepaidCards() ? [{ id: "prepaid_card" }] : []),
+    ];
+
     const preferenceBody = {
       items,
       external_reference: checkoutOrderId,
@@ -141,11 +172,8 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
         ...(payerName ? { name: payerName } : {}),
       },
       payment_methods: {
-        excluded_payment_types: [
-          { id: "ticket" },
-          { id: "bank_transfer" },
-          { id: "atm" },
-        ],
+        // Keep Checkout Pro on card flows by excluding non-card payment types.
+        excluded_payment_types: excludedPaymentTypes,
       },
       notification_url: `${baseUrl}/api/webhooks/mercadopago?source_news=webhooks`,
       ...(shouldUseBinaryMode() ? { binary_mode: true } : {}),

@@ -328,9 +328,9 @@ export function OrderDetailWithTokenView() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-3">
                   <Mail size={16} className="mt-0.5 text-black/60" aria-hidden="true" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs uppercase tracking-[0.2em] text-black/50">Email</p>
-                    <p className="font-medium text-black/90">{order.customerEmail}</p>
+                    <p className="break-all font-medium text-black/90">{order.customerEmail}</p>
                   </div>
                 </div>
                 {order.customerPhone && (
