@@ -135,7 +135,6 @@ export function LandingPageView() {
               <p className="mb-4 max-w-2xl text-base text-white/90 drop-shadow-md sm:text-lg">
                 Velas artesanales para transformar tu espacio en calma, aroma y
                 presencia. Elige tu esencia y siente el cambio desde hoy.
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.
               </p>
 
               <div className="flex flex-wrap items-center gap-4">
