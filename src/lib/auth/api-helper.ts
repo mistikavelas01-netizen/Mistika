@@ -2,15 +2,8 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminToken } from "@/lib/auth/server";
 
-/**
- * Helper para verificar autenticación admin en rutas API
- * Verifica la firma criptográfica completa del token (no solo expiración y rol)
- * 
- * IMPORTANTE: El middleware solo hace validación básica. Esta función hace
- * la verificación completa de la firma criptográfica para seguridad real.
- */
 export async function requireAdminAuth(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<
   | { success: true; payload: AdminTokenPayload }
   | { success: false; response: NextResponse }
@@ -22,7 +15,7 @@ export async function requireAdminAuth(
       success: false,
       response: NextResponse.json(
         { error: "No autorizado. Token requerido." },
-        { status: 401 }
+        { status: 401 },
       ),
     };
   }
@@ -34,23 +27,21 @@ export async function requireAdminAuth(
       success: false,
       response: NextResponse.json(
         { error: "No autorizado. Token requerido." },
-        { status: 401 }
+        { status: 401 },
       ),
     };
   }
 
   try {
-    // Verificación completa de la firma criptográfica
     const payload = verifyAdminToken(token);
 
-    // Verificar que el rol es admin
     if (typeof payload === "object" && payload !== null && "role" in payload) {
       if (payload.role !== "admin") {
         return {
           success: false,
           response: NextResponse.json(
             { error: "No autorizado. Se requieren permisos de administrador." },
-            { status: 403 }
+            { status: 403 },
           ),
         };
       }
@@ -62,10 +53,7 @@ export async function requireAdminAuth(
       error instanceof Error ? error.message : "Token inválido o expirado.";
     return {
       success: false,
-      response: NextResponse.json(
-        { error: errorMessage },
-        { status: 401 }
-      ),
+      response: NextResponse.json({ error: errorMessage }, { status: 401 }),
     };
   }
 }

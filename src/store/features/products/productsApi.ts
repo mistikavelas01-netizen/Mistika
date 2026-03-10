@@ -1,22 +1,39 @@
 import { apiSlice } from "../api/apiSlice";
 
-export interface ProductsQueryParams {
+export type ProductsQueryParams = {
   page?: number;
   limit?: number;
-  sortBy?: "price_asc" | "price_desc" | "newest";
-  categoryId?: string | number;
-}
+  sortBy?: string;
+  categoryId?: string;
+  priceFilter?: string;
+};
 
 export const productsApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
     // Fetch products with pagination, sorting and filtering
     fetchProducts: build.query({
-      query: ({ page = 1, limit = 12, sortBy, categoryId }: ProductsQueryParams = {}) => {
+      query: ({
+        page = 1,
+        limit = 12,
+        sortBy,
+        categoryId,
+        priceFilter,
+      }: ProductsQueryParams = {}) => {
         const params = new URLSearchParams();
+
         params.set("page", page.toString());
         params.set("limit", limit.toString());
+
         if (sortBy) params.set("sortBy", sortBy);
-        if (categoryId && categoryId !== "all") params.set("categoryId", categoryId.toString());
+
+        if (categoryId && categoryId !== "all") {
+          params.set("categoryId", categoryId.toString());
+        }
+
+        if (priceFilter && priceFilter !== "all") {
+          params.set("priceFilter", priceFilter);
+        }
+
         return `/products?${params.toString()}`;
       },
       transformResponse: (response: ApiListResponse<Product>) => {
