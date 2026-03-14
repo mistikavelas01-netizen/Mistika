@@ -61,13 +61,17 @@ export const PUT = withApiRoute(
       if (
         body.status !== undefined &&
         body.status !== currentOrder.status &&
-        LOCKED_ORDER_STATUSES.has(currentOrder.status)
+        (
+          LOCKED_ORDER_STATUSES.has(currentOrder.status) ||
+          currentOrder.paymentStatus === "refunded" ||
+          currentOrder.refundStatus === "full"
+        )
       ) {
         return NextResponse.json(
           {
             success: false,
             error:
-              "No se puede cambiar el estado de un pedido entregado o cancelado",
+              "No se puede cambiar el estado de un pedido entregado, cancelado o reembolsado",
           },
           { status: 409 },
         );

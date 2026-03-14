@@ -100,7 +100,13 @@ export function OrderDetailAdminView() {
 
   const order = orderData?.data;
   const errorMessage = getApiErrorMessage(error);
-  const isStatusLocked = order ? lockedStatuses.has(order.status) : false;
+  const isFullyRefunded = Boolean(
+    order &&
+      (order.paymentStatus === "refunded" || order.refundStatus === "full"),
+  );
+  const isStatusLocked = order
+    ? lockedStatuses.has(order.status) || isFullyRefunded
+    : false;
   const refundedAmount = Number(order?.refundedAmount ?? 0);
   const remainingRefundableAmount = order
     ? Math.max(0, Number(order.totalAmount ?? 0) - refundedAmount)
@@ -113,7 +119,7 @@ export function OrderDetailAdminView() {
 
   const handleStatusChange = async () => {
     if (!order || !pendingStatus) return;
-    if (lockedStatuses.has(order.status)) {
+    if (lockedStatuses.has(order.status) || isFullyRefunded) {
       toast.error("Este pedido ya está finalizado y no permite cambios de estado");
       setPendingStatus(null);
       return;
@@ -327,10 +333,12 @@ export function OrderDetailAdminView() {
     );
   }
 
-  const currentStatus = statusConfig[order.status as OrderStatus] || statusConfig.pending;
+  const effectiveStatus = isFullyRefunded ? "cancelled" : order.status;
+  const currentStatus =
+    statusConfig[effectiveStatus as OrderStatus] || statusConfig.pending;
   const paymentPresentation = getPaymentPresentation(order);
   const StatusIcon = currentStatus.icon;
-  const isCancelledFinal = order.status === "cancelled";
+  const isCancelledFinal = effectiveStatus === "cancelled";
   const cancellationReason = order.notes?.trim();
   const lockedCardTone = isCancelledFinal
     ? {
