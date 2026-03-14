@@ -100,6 +100,7 @@ export function OrderDetailAdminView() {
 
   const order = orderData?.data;
   const errorMessage = getApiErrorMessage(error);
+  const isDeliveredOrder = order?.status === "delivered";
   const isFullyRefunded = Boolean(
     order &&
       (order.paymentStatus === "refunded" || order.refundStatus === "full"),
@@ -113,6 +114,7 @@ export function OrderDetailAdminView() {
     : 0;
   const canRefund = Boolean(
     order?.mpPaymentId &&
+      !isDeliveredOrder &&
       order.paymentStatus === "paid" &&
       remainingRefundableAmount > 0.01,
   );
@@ -778,21 +780,25 @@ export function OrderDetailAdminView() {
                 >
                   {canRefund
                     ? "Puedes procesar un reembolso total o parcial desde este panel."
-                    : !order.mpPaymentId
+                    : isDeliveredOrder
+                      ? "Los pedidos entregados ya no permiten crear reembolsos."
+                      : !order.mpPaymentId
                       ? "Este pedido no tiene un mpPaymentId asociado."
                       : order.paymentStatus !== "paid"
                         ? "Solo se pueden reembolsar pagos aprobados."
                         : "Ya no queda monto disponible para reembolsar."}
                 </div>
 
-                <button
-                  onClick={() => setShowRefundModal(true)}
-                  disabled={!canRefund || isRefunding}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-black/90 disabled:cursor-not-allowed disabled:bg-black/40"
-                >
-                  <Wallet size={16} />
-                  {isRefunding ? "Procesando..." : "Reembolsar pago"}
-                </button>
+                {canRefund && (
+                  <button
+                    onClick={() => setShowRefundModal(true)}
+                    disabled={isRefunding}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-black/90 disabled:cursor-not-allowed disabled:bg-black/40"
+                  >
+                    <Wallet size={16} />
+                    {isRefunding ? "Procesando..." : "Reembolsar pago"}
+                  </button>
+                )}
               </div>
             </div>
 
