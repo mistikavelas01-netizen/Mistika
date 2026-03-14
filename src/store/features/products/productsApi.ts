@@ -1,4 +1,4 @@
-import { apiSlice } from "../api/apiSlice";
+import { apiSlice, asPublicRequest } from "../api/apiSlice";
 
 export type ProductsQueryParams = {
   page?: number;
@@ -34,7 +34,7 @@ export const productsApi = apiSlice.injectEndpoints({
           params.set("priceFilter", priceFilter);
         }
 
-        return `/products?${params.toString()}`;
+        return asPublicRequest(`/products?${params.toString()}`);
       },
       transformResponse: (response: ApiListResponse<Product>) => {
         if (Array.isArray(response)) {
@@ -62,7 +62,7 @@ export const productsApi = apiSlice.injectEndpoints({
 
     // Fetch single product by ID
     fetchProduct: build.query({
-      query: (id: string) => `/products/${id}`,
+      query: (id: string) => asPublicRequest(`/products/${id}`),
       transformResponse: (response: ApiItemResponse<Product>) => {
         if ("success" in response && response.success && response.data) {
           return { data: response.data };

@@ -16,7 +16,6 @@ export type MpPaymentLike = {
   external_reference?: string | null;
   metadata?: { preference_id?: string } | null;
   order_id?: string | number | null;
-  [k: string]: unknown;
 };
 
 /**

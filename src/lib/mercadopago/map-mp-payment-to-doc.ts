@@ -1,16 +1,19 @@
 import "server-only";
 import type { PaymentEntity, PaymentStatus } from "@/firebase/repos";
 import { mpStatusToPaymentStatus } from "./payment-status";
+import { buildRefundSummaryFromMpPayment } from "./refund-summary";
 
 export type MpPaymentLike = {
   id?: string | number;
   status?: string;
+  status_detail?: string;
   transaction_amount?: number;
+  transaction_amount_refunded?: number;
   currency_id?: string;
   payer?: { email?: string; id?: string | number };
   external_reference?: string | null;
   metadata?: Record<string, unknown> | null;
-  [k: string]: unknown;
+  refunds?: Array<{ amount?: number; date_created?: string; status?: string }> | null;
 };
 
 /**
@@ -24,6 +27,9 @@ export function mapMpPaymentToPaymentDocument(
   const status = mpStatusToPaymentStatus(mpStatus);
   const amount = Number(mp?.transaction_amount) || 0;
   const currency = (mp?.currency_id ?? "MXN").toString();
+  const statusDetail =
+    mp?.status_detail != null ? String(mp.status_detail).toLowerCase() : null;
+  const refundSummary = buildRefundSummaryFromMpPayment(mp);
   const payerEmail = mp?.payer?.email ? String(mp.payer.email) : undefined;
   const payerId = mp?.payer?.id != null ? String(mp.payer.id) : undefined;
   const externalReference =
@@ -31,7 +37,7 @@ export function mapMpPaymentToPaymentDocument(
   const metadata =
     mp?.metadata && typeof mp.metadata === "object" ? (mp.metadata as Record<string, unknown>) : undefined;
   const accessActive = status === "approved";
-  const riskFlagged = status === "refunded" || status === "charged_back";
+  const riskFlagged = status === "charged_back";
 
   return {
     mpPaymentId,
@@ -45,6 +51,10 @@ export function mapMpPaymentToPaymentDocument(
     accessActive,
     riskFlagged: riskFlagged ? true : null,
     lastMpStatus: mpStatus || null,
+    mpStatusDetail: statusDetail,
+    refundStatus: refundSummary.refundStatus,
+    refundedAmount: refundSummary.refundedAmount,
+    lastRefundAt: refundSummary.lastRefundAt,
     lastSyncedAt: Date.now(),
   };
 }

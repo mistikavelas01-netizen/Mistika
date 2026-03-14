@@ -31,7 +31,18 @@ export function getStoredToken(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
-  return localStorage.getItem(ADMIN_TOKEN_KEY);
+
+  const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+  if (!token) {
+    return null;
+  }
+
+  if (!isTokenValid(token)) {
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    return null;
+  }
+
+  return token;
 }
 
 /**
