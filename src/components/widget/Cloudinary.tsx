@@ -12,7 +12,7 @@ interface CloudinaryUploadWidgetProps {
   defaultImageUrl?: string;
   folder?: string;
   className?: string;
-}
+} 
 
 export function CloudinaryUploadWidget({
   onUploadSuccess,

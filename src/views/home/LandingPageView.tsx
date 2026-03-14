@@ -3,11 +3,21 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { ArrowDown, ChevronDown, ChevronLeft, ChevronRight, ShoppingBag, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowDown,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ShoppingBag,
+  SlidersHorizontal,
+} from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductCarousel from "@/components/shop/ProductCarousel";
 import { ServerError } from "@/components/ui/ServerError";
-import { useFetchProductsQuery, ProductsQueryParams } from "@/store/features/products/productsApi";
+import {
+  useFetchProductsQuery,
+  ProductsQueryParams,
+} from "@/store/features/products/productsApi";
 import { useFetchCategoriesQuery } from "@/store/features/categories/categoriesApi";
 import { useCart } from "@/context/cart-context";
 
@@ -38,9 +48,6 @@ const cardVariants = {
 
 type SortOption = "newest" | "price_asc" | "price_desc";
 
-const sortOptions: { value: SortOption; label: string }[] = [
-  { value: "newest", label: "Más recientes" },
-];
 
 export function LandingPageView() {
   const { totalQuantity } = useCart();
@@ -49,7 +56,6 @@ export function LandingPageView() {
   const [categoryId, setCategoryId] = useState<string>("all");
   const pageSize = 20;
 
-  // Fetch categories for filter
   const { data: categoriesData } = useFetchCategoriesQuery(true);
   const categories = categoriesData?.data ?? [];
 
@@ -59,13 +65,12 @@ export function LandingPageView() {
     isError,
     isFetching,
     refetch,
-  } = useFetchProductsQuery(
-    { page: currentPage, limit: pageSize, sortBy, categoryId } as ProductsQueryParams,
-    {
-      skip: false,
-      refetchOnMountOrArgChange: true,
-    }
-  );
+  } = useFetchProductsQuery({
+    page: currentPage,
+    limit: pageSize,
+    sortBy,
+    categoryId,
+  } as ProductsQueryParams);
 
   const products = productsData?.data ?? [];
   const pagination = productsData?.pagination;
@@ -97,6 +102,7 @@ export function LandingPageView() {
     setCategoryId(newCategoryId);
     setCurrentPage(1); // Reset to page 1 when filter changes
   };
+
 
   return (
     <main className="min-h-screen bg-white text-black">
@@ -210,19 +216,19 @@ export function LandingPageView() {
                   className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/40"
                 />
               </div>
+                 
 
               {/* Sort Filter */}
               <div className="relative">
                 <select
                   value={sortBy}
-                  onChange={(e) => handleSortChange(e.target.value as SortOption)}
+                  onChange={(e) =>
+                    handleSortChange(e.target.value as SortOption)
+                  }
                   className="w-full appearance-none rounded-xl border border-black/10 bg-white px-4 py-2.5 pr-10 text-sm font-medium text-black transition hover:border-black/20 focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10 sm:w-auto"
                 >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  <option value="price_asc">Precio: Menor a Mayor</option>
+                  <option value="price_desc">Precio: Mayor a Menor</option>
                 </select>
                 <ChevronDown
                   size={16}
@@ -293,9 +299,15 @@ export function LandingPageView() {
                         (page >= currentPage - 1 && page <= currentPage + 1);
 
                       if (!shouldShow) {
-                        if (page === currentPage - 2 || page === currentPage + 2) {
+                        if (
+                          page === currentPage - 2 ||
+                          page === currentPage + 2
+                        ) {
                           return (
-                            <span key={page} className="px-2 text-sm text-black/40">
+                            <span
+                              key={page}
+                              className="px-2 text-sm text-black/40"
+                            >
                               ...
                             </span>
                           );
@@ -314,7 +326,9 @@ export function LandingPageView() {
                               : "border-black/10 bg-white text-black hover:bg-black/5"
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                           aria-label={`Ir a página ${page}`}
-                          aria-current={page === currentPage ? "page" : undefined}
+                          aria-current={
+                            page === currentPage ? "page" : undefined
+                          }
                         >
                           {page}
                         </button>
