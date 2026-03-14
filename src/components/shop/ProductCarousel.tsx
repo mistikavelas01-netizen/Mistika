@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type ProductCarouselSlide = {
   id: string;
@@ -11,32 +11,18 @@ type ProductCarouselSlide = {
 
 type ProductCarouselProps = {
   slides: ProductCarouselSlide[];
-  onFirstImageReady?: () => void;
 };
 
-export default function ProductCarousel({
-  slides,
-  onFirstImageReady,
-}: ProductCarouselProps) {
-  const hasNotifiedFirstImage = useRef(false);
-  const firstSlideId = slides[0]?.id;
-
+export default function ProductCarousel({ slides }: ProductCarouselProps) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    hasNotifiedFirstImage.current = false;
     if (slides.length <= 1) return;
     const t = setInterval(() => {
       setIndex((i) => (i + 1) % slides.length);
     }, 4000);
     return () => clearInterval(t);
-  }, [firstSlideId, slides.length]);
-
-  const handlePrimaryImageSettled = (slideIndex: number) => {
-    if (slideIndex !== 0 || hasNotifiedFirstImage.current) return;
-    hasNotifiedFirstImage.current = true;
-    onFirstImageReady?.();
-  };
+  }, [slides.length]);
 
   if (slides.length === 0) {
     return (
@@ -64,8 +50,6 @@ export default function ProductCarousel({
               fill
               priority={i === 0}
               sizes="100vw"
-              onLoad={() => handlePrimaryImageSettled(i)}
-              onError={() => handlePrimaryImageSettled(i)}
               className="object-cover"
             />
             <div className="absolute inset-0 bg-black/35" />
