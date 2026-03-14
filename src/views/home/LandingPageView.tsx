@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowDown,
   ChevronDown,
@@ -19,6 +19,7 @@ import {
   ProductsQueryParams,
 } from "@/store/features/products/productsApi";
 import { useFetchCategoriesQuery } from "@/store/features/categories/categoriesApi";
+import { useFetchCarouselItemsQuery } from "@/store/features/carousel/carouselApi";
 import { useCart } from "@/context/cart-context";
 
 const heroVariants = {
@@ -48,16 +49,58 @@ const cardVariants = {
 
 type SortOption = "newest" | "price_asc" | "price_desc";
 
+function LandingPageLoader() {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/92 px-6 backdrop-blur-sm">
+      <div
+        className="flex max-w-sm flex-col items-center text-center"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.4em] text-black shadow-sm">
+          Mistika
+        </span>
+        <div className="mt-5 h-12 w-12 animate-spin rounded-full border-4 border-black/10 border-t-black" />
+        <p className="mt-5 text-sm font-medium text-black">
+          Cargando portada
+        </p>
+        <p className="mt-2 text-sm text-black/60">
+          Estamos preparando las imágenes del carrusel.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function LandingPageView() {
   const { totalQuantity } = useCart();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [categoryId, setCategoryId] = useState<string>("all");
+  const [readyCarouselSlideId, setReadyCarouselSlideId] = useState<
+    string | null
+  >(null);
   const pageSize = 20;
 
   const { data: categoriesData } = useFetchCategoriesQuery(true);
   const categories = categoriesData?.data ?? [];
+  const {
+    data: carouselData,
+    isError: isCarouselError,
+  } = useFetchCarouselItemsQuery(true, {
+    refetchOnMountOrArgChange: true,
+  });
+  const carouselSlides = (carouselData?.data ?? [])
+    .filter((item: CarouselItem) => Boolean(item.imageUrl))
+    .map((item: CarouselItem) => ({
+      id: item.id,
+      imageUrl: item.imageUrl,
+      name: item.name,
+    }));
+  const firstCarouselSlideId = carouselSlides[0]?.id ?? null;
+  const hasCarouselSlides = carouselSlides.length > 0;
+  const isCarouselImageReady =
+    !hasCarouselSlides || readyCarouselSlideId === firstCarouselSlideId;
 
   const {
     data: productsData,
@@ -76,10 +119,9 @@ export function LandingPageView() {
   const pagination = productsData?.pagination;
   const productsSectionRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
-  const gridInView = useInView(gridRef, {
-    once: true,
-    margin: "0px 0px -120px 0px",
-  });
+  const shouldShowCarouselLoader =
+    (!carouselData && !isCarouselError) ||
+    (hasCarouselSlides && !isCarouselImageReady);
 
   const scrollToProducts = () => {
     productsSectionRef.current?.scrollIntoView({
@@ -106,9 +148,16 @@ export function LandingPageView() {
 
   return (
     <main className="min-h-screen bg-white text-black">
+      {shouldShowCarouselLoader ? <LandingPageLoader /> : null}
+
       <div className="relative">
         <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen">
-          <ProductCarousel />
+          <ProductCarousel
+            slides={carouselSlides}
+            onFirstImageReady={() => {
+              setReadyCarouselSlideId(firstCarouselSlideId);
+            }}
+          />
 
           <motion.section
             className="absolute inset-0 z-10 mx-auto flex max-w-6xl flex-col px-6 pb-8 pt-16 sm:px-10"
