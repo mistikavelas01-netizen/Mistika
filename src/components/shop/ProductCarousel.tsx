@@ -1,74 +1,71 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { useFetchCarouselItemsQuery } from "@/store/features/carousel/carouselApi";
+import { useEffect, useRef, useState } from "react";
 
-const fallbackSlides = [
-  {
-    id: "fallback-1",
-    imageUrl:
-      "https://res.cloudinary.com/dpb4rfzui/image/upload/v1769289637/Palos_yoao2d_q0dv7y.jpg",
-    name: "Mistika",
-  },
-  {
-    id: "fallback-2",
-    imageUrl:
-      "https://res.cloudinary.com/dpb4rfzui/image/upload/v1769289635/Materiales_ah5rex_l9b80i.jpg",
-    name: "Mistika",
-  },
-  {
-    id: "fallback-3",
-    imageUrl:
-      "https://res.cloudinary.com/dpb4rfzui/image/upload/v1769289634/Home_q5q6go_mfggdj.jpg",
-    name: "Mistika",
-  },
-  {
-    id: "fallback-4",
-    imageUrl:
-      "https://res.cloudinary.com/dpb4rfzui/image/upload/v1769289633/Vela_qoeuqi_xokgqp.jpg",
-    name: "Mistika",
-  },
-];
+type ProductCarouselSlide = {
+  id: string;
+  imageUrl: string;
+  name?: string | null;
+};
 
-export default function ProductCarousel() {
-  const { data } = useFetchCarouselItemsQuery(true, { refetchOnMountOrArgChange: true });
-  const items = data?.data ?? [];
+type ProductCarouselProps = {
+  slides: ProductCarouselSlide[];
+  onFirstImageReady?: () => void;
+};
 
-  const slides = useMemo(() => {
-    if (items.length === 0) return fallbackSlides;
-    return items.map((item) => ({
-      id: item.id,
-      imageUrl: item.imageUrl,
-      name: item.name,
-    }));
-  }, [items]);
+export default function ProductCarousel({
+  slides,
+  onFirstImageReady,
+}: ProductCarouselProps) {
+  const hasNotifiedFirstImage = useRef(false);
+  const firstSlideId = slides[0]?.id;
 
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    setIndex(0);
+    hasNotifiedFirstImage.current = false;
     if (slides.length <= 1) return;
     const t = setInterval(() => {
       setIndex((i) => (i + 1) % slides.length);
     }, 4000);
     return () => clearInterval(t);
-  }, [slides.length]);
+  }, [firstSlideId, slides.length]);
+
+  const handlePrimaryImageSettled = (slideIndex: number) => {
+    if (slideIndex !== 0 || hasNotifiedFirstImage.current) return;
+    hasNotifiedFirstImage.current = true;
+    onFirstImageReady?.();
+  };
+
+  if (slides.length === 0) {
+    return (
+      <section className="relative w-screen overflow-hidden">
+        <div className="relative h-screen w-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.22),_transparent_42%),linear-gradient(135deg,_#111111_0%,_#2e2a26_48%,_#7a644d_100%)] sm:h-[80vh] sm:min-h-[600px]">
+          <div className="absolute inset-0 bg-black/35" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative w-screen overflow-hidden">
-      <div className="relative h-screen sm:h-[80vh] sm:min-h-[600px] w-full">
+      <div className="relative h-screen w-full sm:h-[80vh] sm:min-h-[600px]">
         {slides.map((slide, i) => (
           <div
             key={`${slide.id}-${i}`}
-            className={`absolute inset-0 transition-opacity duration-700 ${i === index ? "opacity-100" : "opacity-0"
-              }`}
+            className={`absolute inset-0 transition-opacity duration-700 ${
+              i === index % slides.length ? "opacity-100" : "opacity-0"
+            }`}
           >
             <Image
               src={slide.imageUrl}
               alt={slide.name ?? "Fotografía del carrusel"}
               fill
               priority={i === 0}
+              sizes="100vw"
+              onLoad={() => handlePrimaryImageSettled(i)}
+              onError={() => handlePrimaryImageSettled(i)}
               className="object-cover"
             />
             <div className="absolute inset-0 bg-black/35" />
@@ -82,10 +79,11 @@ export default function ProductCarousel() {
                 key={i}
                 type="button"
                 aria-label={`Ir a la diapositiva ${i + 1}`}
-                aria-current={i === index}
+                aria-current={i === index % slides.length}
                 onClick={() => setIndex(i)}
-                className={`h-2 w-2 rounded-full transition-colors ${i === index ? "bg-white" : "bg-white/40"
-                  }`}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  i === index % slides.length ? "bg-white" : "bg-white/40"
+                }`}
               />
             ))}
           </div>
