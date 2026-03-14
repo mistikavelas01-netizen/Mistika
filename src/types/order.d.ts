@@ -23,6 +23,21 @@ declare global {
     | "failed"
     | "refunded";
 
+  type OrderRefundSummaryStatus =
+    | "none"
+    | "partial"
+    | "full";
+
+  type OrderRefundRecordStatus =
+    | "processing"
+    | "succeeded"
+    | "failed"
+    | "reconciled";
+
+  type OrderRefundType =
+    | "full"
+    | "partial";
+
   /**
    * Payment method
    */
@@ -70,6 +85,27 @@ declare global {
     };
   };
 
+  type OrderRefund = {
+    id: string;
+    orderId: string;
+    mpPaymentId: string;
+    mpRefundId?: string | null;
+    type: OrderRefundType;
+    requestedAmount: number;
+    processedAmount: number;
+    currency: string;
+    reason: string;
+    status: OrderRefundRecordStatus;
+    summaryStatus: OrderRefundSummaryStatus;
+    requestedByAdminId: string;
+    requestedByAdminUsername?: string | null;
+    processorStatus?: string | null;
+    errorMessage?: string | null;
+    refundedAt?: Date | number | null;
+    createdAt: Date | number;
+    updatedAt: Date | number;
+  };
+
   /**
    * Order model from database (Firebase)
    */
@@ -83,6 +119,10 @@ declare global {
     mpPaymentId?: string | null;
     externalReference?: string | null;
     currency?: string | null;
+    refundStatus?: OrderRefundSummaryStatus | null;
+    refundedAmount?: number | null;
+    lastRefundAt?: Date | number | null;
+    lastRefundReason?: string | null;
     totalAmount: number;
     subtotal: number;
     shippingCost: number;
@@ -107,6 +147,7 @@ declare global {
     createdAt: Date | number;
     updatedAt: Date | number;
     items?: OrderItem[];
+    refunds?: OrderRefund[];
   };
 
   /**

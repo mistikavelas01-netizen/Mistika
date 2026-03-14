@@ -36,6 +36,7 @@ export const checkoutOrdersRepo = wrapRepo(baseRepos.checkoutOrdersRepo, "checko
 export const paymentAttemptsRepo = wrapRepo(baseRepos.paymentAttemptsRepo, "payment_attempts");
 export const webhookEventsRepo = wrapRepo(baseRepos.webhookEventsRepo, "webhook_events");
 export const paymentsRepo = wrapRepo(baseRepos.paymentsRepo, "payments");
+export const refundsRepo = wrapRepo(baseRepos.refundsRepo, "refunds");
 
 export const toApiEntity = baseRepos.toApiEntity;
 export const toApiEntityList = baseRepos.toApiEntityList;
@@ -51,4 +52,8 @@ export type {
   PaymentAttemptEntity,
   WebhookEventEntity,
   PaymentEntity,
+  RefundEntity,
+  RefundSummaryStatus,
+  RefundType,
+  RefundRecordStatus,
 } from "@/firebase/repos";

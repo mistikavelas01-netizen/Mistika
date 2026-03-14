@@ -1,23 +1,40 @@
-import { apiSlice } from "../api/apiSlice";
+import { apiSlice, asPublicRequest } from "../api/apiSlice";
 
-export interface ProductsQueryParams {
+export type ProductsQueryParams = {
   page?: number;
   limit?: number;
-  sortBy?: "price_asc" | "price_desc" | "newest";
-  categoryId?: string | number;
-}
+  sortBy?: string;
+  categoryId?: string;
+  priceFilter?: string;
+};
 
 export const productsApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
     // Fetch products with pagination, sorting and filtering
     fetchProducts: build.query({
-      query: ({ page = 1, limit = 12, sortBy, categoryId }: ProductsQueryParams = {}) => {
+      query: ({
+        page = 1,
+        limit = 12,
+        sortBy,
+        categoryId,
+        priceFilter,
+      }: ProductsQueryParams = {}) => {
         const params = new URLSearchParams();
+
         params.set("page", page.toString());
         params.set("limit", limit.toString());
+
         if (sortBy) params.set("sortBy", sortBy);
-        if (categoryId && categoryId !== "all") params.set("categoryId", categoryId.toString());
-        return `/products?${params.toString()}`;
+
+        if (categoryId && categoryId !== "all") {
+          params.set("categoryId", categoryId.toString());
+        }
+
+        if (priceFilter && priceFilter !== "all") {
+          params.set("priceFilter", priceFilter);
+        }
+
+        return asPublicRequest(`/products?${params.toString()}`);
       },
       transformResponse: (response: ApiListResponse<Product>) => {
         if (Array.isArray(response)) {
@@ -45,7 +62,7 @@ export const productsApi = apiSlice.injectEndpoints({
 
     // Fetch single product by ID
     fetchProduct: build.query({
-      query: (id: string) => `/products/${id}`,
+      query: (id: string) => asPublicRequest(`/products/${id}`),
       transformResponse: (response: ApiItemResponse<Product>) => {
         if ("success" in response && response.success && response.data) {
           return { data: response.data };
