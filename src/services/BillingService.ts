@@ -63,11 +63,16 @@ export async function handleRefundOrChargeback(payment: PaymentEntity): Promise<
   });
 }
 
+function isFullyRefundedPayment(payment: PaymentEntity): boolean {
+  const status = (payment.status ?? "").toLowerCase();
+  return isRefundStatus(status) || (payment.refundStatus ?? "none") === "full";
+}
+
 function getOrderPaymentStatusFromPayment(
   payment: PaymentEntity,
 ): OrderEntity["paymentStatus"] | null {
   const status = (payment.status ?? "").toLowerCase();
-  if (isRefundStatus(status)) return "refunded";
+  if (isFullyRefundedPayment(payment)) return "refunded";
   if (isApprovedStatus(status)) return "paid";
   if (isPendingStatus(status)) return "pending";
   if (isRejectedOrCancelledStatus(status) || isChargebackStatus(status)) {
@@ -101,6 +106,10 @@ async function syncOrdersFromPayment(payment: PaymentEntity): Promise<void> {
         updateData.paymentStatus = nextPaymentStatus;
       }
 
+      if (isFullyRefundedPayment(payment) && order.status !== "cancelled") {
+        updateData.status = "cancelled";
+      }
+
       if ((order.refundStatus ?? "none") !== nextRefundStatus) {
         updateData.refundStatus = nextRefundStatus;
       }
@@ -129,10 +138,10 @@ async function syncOrdersFromPayment(payment: PaymentEntity): Promise<void> {
  */
 export async function routeByPaymentStatus(payment: PaymentEntity): Promise<void> {
   const status = (payment.status ?? "").toLowerCase();
-  if (isApprovedStatus(status)) await handleApprovedPayment(payment);
+  if (isFullyRefundedPayment(payment)) await handleRefundedPayment(payment);
+  else if (isApprovedStatus(status)) await handleApprovedPayment(payment);
   else if (isPendingStatus(status)) await handlePendingPayment(payment);
   else if (isRejectedOrCancelledStatus(status)) await handleRejectedPayment(payment);
-  else if (isRefundStatus(status)) await handleRefundedPayment(payment);
   else if (isChargebackStatus(status)) await handleRefundOrChargeback(payment);
 
   await syncOrdersFromPayment(payment);
