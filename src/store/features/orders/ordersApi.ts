@@ -1,4 +1,4 @@
-import { apiSlice } from "../api/apiSlice";
+import { apiSlice, asPublicRequest } from "../api/apiSlice";
 
 export const ordersApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
@@ -61,7 +61,9 @@ export const ordersApi = apiSlice.injectEndpoints({
         token: string;
         expires: string;
       }) =>
-        `/orders/number/${orderNumber}?token=${encodeURIComponent(token)}&expires=${encodeURIComponent(expires)}`,
+        asPublicRequest(
+          `/orders/number/${orderNumber}?token=${encodeURIComponent(token)}&expires=${encodeURIComponent(expires)}`
+        ),
       transformResponse: (response: ApiItemResponse<Order>) => {
         if ("success" in response && response.success && response.data) {
           return { data: response.data };
@@ -77,7 +79,9 @@ export const ordersApi = apiSlice.injectEndpoints({
     // Fetch order details by ID with token (public access)
     fetchOrderDetailsWithToken: build.query({
       query: ({ id, token, expires }: { id: string; token: string; expires: string }) =>
-        `/orders/details/${id}?token=${encodeURIComponent(token)}&expires=${encodeURIComponent(expires)}`,
+        asPublicRequest(
+          `/orders/details/${id}?token=${encodeURIComponent(token)}&expires=${encodeURIComponent(expires)}`
+        ),
       transformResponse: (response: ApiItemResponse<Order>) => {
         if ("success" in response && response.success && response.data) {
           return { data: response.data };
@@ -92,7 +96,7 @@ export const ordersApi = apiSlice.injectEndpoints({
 
     // Create checkout draft (order data before payment)
     createCheckoutDraft: build.mutation({
-      query: (orderData: OrderInput) => ({
+      query: (orderData: OrderInput) => asPublicRequest({
         url: "/checkout/draft",
         method: "POST",
         body: orderData,
@@ -105,7 +109,7 @@ export const ordersApi = apiSlice.injectEndpoints({
 
     // Create Mercado Pago preference for a draft (returns init_point)
     createMercadoPagoPreference: build.mutation({
-      query: (params: { draftId: string; payer?: { email?: string; name?: string } }) => ({
+      query: (params: { draftId: string; payer?: { email?: string; name?: string } }) => asPublicRequest({
         url: "/payments/mercadopago/preference",
         method: "POST",
         body: params,

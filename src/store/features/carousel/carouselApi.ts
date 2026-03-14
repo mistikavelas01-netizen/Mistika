@@ -1,11 +1,13 @@
-import { apiSlice } from "../api/apiSlice";
+import { apiSlice, asPublicRequest } from "../api/apiSlice";
 
 export const carouselApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
     // Fetch carousel items
     fetchCarouselItems: build.query({
       query: (activeOnly: boolean = true) =>
-        activeOnly ? "/carousel?activeOnly=true" : "/carousel?activeOnly=false",
+        activeOnly
+          ? asPublicRequest("/carousel?activeOnly=true")
+          : "/carousel?activeOnly=false",
       transformResponse: (response: ApiListResponse<CarouselItem>) => {
         if (Array.isArray(response)) {
           return { data: response };

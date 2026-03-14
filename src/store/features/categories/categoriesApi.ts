@@ -1,11 +1,11 @@
-import { apiSlice } from "../api/apiSlice";
+import { apiSlice, asPublicRequest } from "../api/apiSlice";
 
 export const categoriesApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
     // Fetch all categories
     fetchCategories: build.query({
       query: (activeOnly?: boolean) => 
-        activeOnly ? "/categories?activeOnly=true" : "/categories",
+        asPublicRequest(activeOnly ? "/categories?activeOnly=true" : "/categories"),
       transformResponse: (response: ApiListResponse<Category>) => {
         if (Array.isArray(response)) {
           return { data: response };
@@ -28,7 +28,7 @@ export const categoriesApi = apiSlice.injectEndpoints({
 
     // Fetch single category by ID
     fetchCategory: build.query({
-      query: (id: string) => `/categories/${id}`,
+      query: (id: string) => asPublicRequest(`/categories/${id}`),
       transformResponse: (response: ApiItemResponse<Category>) => {
         if ("success" in response && response.success && response.data) {
           return { data: response.data };
