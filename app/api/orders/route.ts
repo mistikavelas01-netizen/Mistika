@@ -326,6 +326,10 @@ export const POST = withApiRoute(
         shippingMethod: body.shippingMethod ?? "standard",
         paymentMethod: body.paymentMethod ?? null,
         paymentStatus: "pending",
+        refundStatus: "none" as const,
+        refundedAmount: 0,
+        lastRefundAt: null,
+        lastRefundReason: null,
         notes: body.notes ?? null,
       };
 

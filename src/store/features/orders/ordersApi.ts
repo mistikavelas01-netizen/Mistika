@@ -157,6 +157,44 @@ export const ordersApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    refundOrderPayment: build.mutation({
+      query: ({
+        id,
+        ...body
+      }: {
+        id: string;
+        type: OrderRefundType;
+        amount?: number;
+        reason: string;
+      }) => ({
+        url: `/admin/orders/${id}/refund`,
+        method: "POST",
+        body,
+        headers: {
+          "x-idempotency-key": crypto.randomUUID(),
+        },
+      }),
+      transformResponse: (
+        response: ApiMutationResponse<{
+          refund: OrderRefund;
+          payment: {
+            paymentStatus: string;
+            refundStatus: OrderRefundSummaryStatus;
+            refundedAmount: number;
+          };
+        }>,
+      ) => {
+        if ("success" in response && response.success) {
+          return { success: true, data: response.data, message: response.message };
+        }
+        return response;
+      },
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Orders", id },
+        "Orders",
+      ],
+    }),
+
   }),
 });
 
@@ -170,4 +208,5 @@ export const {
   useCreateCheckoutDraftMutation,
   useCreateMercadoPagoPreferenceMutation,
   useUpdateOrderMutation,
+  useRefundOrderPaymentMutation,
 } = ordersApi;

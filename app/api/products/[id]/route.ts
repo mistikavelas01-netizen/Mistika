@@ -1,44 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { productsRepo, categoriesRepo, toApiEntity } from "../../_utils/repos";
-import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { isAdminRequest, requireAdminAuth } from "@/lib/auth/api-helper";
 import { PLACEHOLDER_IMAGE } from "@/constant";
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 
 export const GET = withApiRoute(
-  { route: "/api/products" },
-  async (request: NextRequest) => {
+  { route: "/api/products/[id]" },
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> },
+  ) => {
     try {
-      const { searchParams } = new URL(request.url);
+      const { id } = await params;
+      const adminAccess = isAdminRequest(request);
+      const product = await productsRepo.getById(id);
 
-      const priceFilter = searchParams.get("priceFilter");
-      const categoryId = searchParams.get("categoryId");
-
-      let products = await productsRepo.where("isActive", "==", true);
-
-      // filtro categoría
-      if (categoryId && categoryId !== "all") {
-        products = products.filter((p) => p.categoryId === categoryId);
+      if (!product || (!adminAccess && !product.isActive)) {
+        return NextResponse.json(
+          { success: false, error: "Producto no encontrado" },
+          { status: 404 },
+        );
       }
 
-      // filtro precio
-      if (priceFilter === "greater_70") {
-        products = products.filter((p) => Number(p.price ?? 0) > 70);
-      }
-
-      if (priceFilter === "less_70") {
-        products = products.filter((p) => Number(p.price ?? 0) < 70);
-      }
+      const category = await categoriesRepo.getById(product.categoryId);
 
       return NextResponse.json({
         success: true,
-        data: products.map(toApiEntity),
+        data: {
+          ...toApiEntity(product),
+          category: category ? toApiEntity(category) : undefined,
+        },
       });
     } catch (error) {
-      logger.error("products.fetch_failed", { error });
+      logger.error("products.fetch_one_failed", { error });
 
       return NextResponse.json(
-        { success: false, message: "No se pudieron obtener los productos" },
+        { success: false, message: "No se pudo obtener el producto" },
         { status: 500 },
       );
     }

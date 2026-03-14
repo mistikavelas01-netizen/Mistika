@@ -1,5 +1,5 @@
 import "server-only";
-import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
+import { MercadoPagoConfig, Preference, Payment, PaymentRefund } from "mercadopago";
 
 const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
 
@@ -12,6 +12,7 @@ function getConfig(): MercadoPagoConfig {
 
 let preferenceClient: Preference | null = null;
 let paymentClient: Payment | null = null;
+let paymentRefundClient: PaymentRefund | null = null;
 
 export function getPreferenceClient(): Preference {
   if (!preferenceClient) {
@@ -25,6 +26,13 @@ export function getPaymentClient(): Payment {
     paymentClient = new Payment(getConfig());
   }
   return paymentClient;
+}
+
+export function getPaymentRefundClient(): PaymentRefund {
+  if (!paymentRefundClient) {
+    paymentRefundClient = new PaymentRefund(getConfig());
+  }
+  return paymentRefundClient;
 }
 
 export function isMercadoPagoConfigured(): boolean {

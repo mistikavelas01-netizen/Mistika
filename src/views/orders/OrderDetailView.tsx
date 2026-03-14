@@ -2,15 +2,16 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  Package,
   MapPin,
   Mail,
   Phone,
   Truck,
   CheckCircle,
+  RotateCcw,
 } from "lucide-react";
 import { useFetchOrderByNumberQuery } from "@/store/features/orders/ordersApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
@@ -54,6 +55,10 @@ export function OrderDetailView() {
 
   const order = orderData?.data;
   const errorMessage = getApiErrorMessage(error);
+  const refundedAmount = Number(order?.refundedAmount ?? 0);
+  const netChargedAmount = order
+    ? Math.max(0, Number(order.totalAmount ?? 0) - refundedAmount)
+    : 0;
 
   const formatPrice = (price: number | null | string) => {
     if (price === null || price === undefined) return "—";
@@ -163,7 +168,58 @@ export function OrderDetailView() {
         </motion.div>
 
         {/* Success / Status Message */}
-        {order.status === "pending" && (
+        {(order.refundStatus === "full" ||
+          order.paymentStatus === "refunded") ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 rounded-[32px] border border-red-200 bg-red-50 p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100">
+                <RotateCcw
+                  size={24}
+                  className="text-red-700"
+                  aria-hidden="true"
+                />
+              </div>
+              <div>
+                <h3 className="mb-2 text-lg font-semibold text-red-900">
+                  Pago reembolsado
+                </h3>
+                <p className="text-sm text-red-800">
+                  Este pedido tiene un reembolso total registrado por{" "}
+                  {formatPrice(refundedAmount)}.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        ) : order.refundStatus === "partial" ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 rounded-[32px] border border-amber-200 bg-amber-50 p-6 shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                <RotateCcw
+                  size={24}
+                  className="text-amber-700"
+                  aria-hidden="true"
+                />
+              </div>
+              <div>
+                <h3 className="mb-2 text-lg font-semibold text-amber-900">
+                  Reembolso parcial aplicado
+                </h3>
+                <p className="text-sm text-amber-800">
+                  Se devolvieron {formatPrice(refundedAmount)} de tu pago. El
+                  importe vigente de la orden es {formatPrice(netChargedAmount)}.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        ) : order.status === "pending" ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -191,7 +247,7 @@ export function OrderDetailView() {
               </div>
             </div>
           </motion.div>
-        )}
+        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content */}
@@ -209,10 +265,11 @@ export function OrderDetailView() {
                       className="flex items-center gap-4 rounded-xl border border-black/10 bg-black/5 p-4"
                     >
                       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-black/10 bg-white">
-                        <img
+                        <Image
                           src={getProductImageUrl(item.product?.imageUrl)}
                           alt={item.productName}
-                          className="h-full w-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       </div>
                       <div className="flex-1">
@@ -284,6 +341,26 @@ export function OrderDetailView() {
                   Nuestros productos ya incluyen el IVA.
                 </p>
                 <div className="border-t border-black/10 pt-3">
+                  {refundedAmount > 0 && (
+                    <>
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="font-medium text-black/60">
+                          Reembolsado
+                        </span>
+                        <span className="font-semibold text-red-700">
+                          {formatPrice(refundedAmount)}
+                        </span>
+                      </div>
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="font-medium text-black/60">
+                          Importe vigente
+                        </span>
+                        <span className="font-semibold">
+                          {formatPrice(netChargedAmount)}
+                        </span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="font-semibold uppercase tracking-[0.1em]">
                       Total

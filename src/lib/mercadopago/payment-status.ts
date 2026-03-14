@@ -36,7 +36,14 @@ export function isRejectedOrCancelledStatus(s: string): boolean {
   return set.has((s ?? "").toLowerCase());
 }
 
+export function isRefundStatus(s: string): boolean {
+  return (s ?? "").toLowerCase() === "refunded";
+}
+
+export function isChargebackStatus(s: string): boolean {
+  return (s ?? "").toLowerCase() === "charged_back";
+}
+
 export function isRefundOrChargebackStatus(s: string): boolean {
-  const set = new Set(["refunded", "charged_back"]);
-  return set.has((s ?? "").toLowerCase());
+  return isRefundStatus(s) || isChargebackStatus(s);
 }

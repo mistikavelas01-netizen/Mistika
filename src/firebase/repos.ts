@@ -37,6 +37,7 @@ export const COLLECTIONS = {
   PAYMENT_ATTEMPTS: "payment_attempts",
   WEBHOOK_EVENTS: "webhook_events",
   PAYMENTS: "payments",
+  REFUNDS: "refunds",
 } as const;
 
 /** Estados del flujo de pago (Checkout Pro) */
@@ -149,6 +150,14 @@ export interface OrderEntity extends FirebaseEntity {
   externalReference?: string | null;
   /** Moneda (ej. MXN) */
   currency?: string | null;
+  /** Estado agregado de reembolsos: none | partial | full */
+  refundStatus?: RefundSummaryStatus | null;
+  /** Monto total reembolsado acumulado */
+  refundedAmount?: number | null;
+  /** Última fecha de reembolso observada */
+  lastRefundAt?: number | null;
+  /** Último motivo de reembolso registrado localmente */
+  lastRefundReason?: string | null;
   /** Logs de webhooks para auditoría (payload raw) */
   mpWebhookLogs?: { topic: string; paymentId?: string; timestamp: number }[];
 }
@@ -170,6 +179,19 @@ export interface WebhookEventEntity extends FirebaseEntity {
   rawPayloadTruncated?: string | null;
   processedAt?: number | null;
 }
+
+/** Estado agregado de reembolsos sobre el pago/orden */
+export type RefundSummaryStatus = "none" | "partial" | "full";
+
+/** Tipo de refund solicitado por admin */
+export type RefundType = "full" | "partial";
+
+/** Estado de nuestro intento/registro de refund */
+export type RefundRecordStatus =
+  | "processing"
+  | "succeeded"
+  | "failed"
+  | "reconciled";
 
 /** Estado de pago MP en nuestra entidad Payment */
 export type PaymentStatus =
@@ -196,7 +218,33 @@ export interface PaymentEntity extends FirebaseEntity {
   accessActive: boolean;
   riskFlagged?: boolean | null;
   lastMpStatus?: string | null;
+  mpStatusDetail?: string | null;
+  refundStatus?: RefundSummaryStatus | null;
+  refundedAmount?: number | null;
+  lastRefundAt?: number | null;
+  lastRefundReason?: string | null;
   lastSyncedAt?: number | null;
+}
+
+/** Refund emitido sobre un pago de MP */
+export interface RefundEntity extends FirebaseEntity {
+  orderId: string;
+  mpPaymentId: string;
+  mpRefundId?: string | null;
+  type: RefundType;
+  requestedAmount: number;
+  processedAmount: number;
+  currency: string;
+  reason: string;
+  status: RefundRecordStatus;
+  summaryStatus: RefundSummaryStatus;
+  idempotencyKey: string;
+  requestedByAdminId: string;
+  requestedByAdminUsername?: string | null;
+  processorStatus?: string | null;
+  raw?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+  refundedAt?: number | null;
 }
 
 /** Borrador de orden: se crea antes del pago y se convierte en Order cuando MP aprueba */
@@ -241,3 +289,4 @@ export const checkoutOrdersRepo = new FirebaseRepository<CheckoutOrderEntity>(CO
 export const paymentAttemptsRepo = new FirebaseRepository<PaymentAttemptEntity>(COLLECTIONS.PAYMENT_ATTEMPTS);
 export const webhookEventsRepo = new FirebaseRepository<WebhookEventEntity>(COLLECTIONS.WEBHOOK_EVENTS);
 export const paymentsRepo = new FirebaseRepository<PaymentEntity>(COLLECTIONS.PAYMENTS);
+export const refundsRepo = new FirebaseRepository<RefundEntity>(COLLECTIONS.REFUNDS);
