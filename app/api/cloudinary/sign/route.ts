@@ -24,9 +24,9 @@ const ALLOWED_SIGN_KEYS = new Set([
 const TIMESTAMP_TOLERANCE_SEC = 10 * 60;
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: CLOUDINARY_CLOUD_NAME,
+  api_key: CLOUDINARY_API_KEY,
+  api_secret: CLOUDINARY_API_SECRET,
 });
 
 export const POST = withApiRoute(
@@ -56,6 +56,13 @@ export const POST = withApiRoute(
       }
 
       const keys = Object.keys(paramsToSign);
+      const hasInvalidKey = keys.some((key) => !ALLOWED_SIGN_KEYS.has(key));
+      if (hasInvalidKey) {
+        return NextResponse.json(
+          { error: "Parámetros de firma no permitidos" },
+          { status: 400 },
+        );
+      }
 
       const folder = String(paramsToSign.folder ?? "").trim();
       if (!folder || !ALLOWED_FOLDERS.has(folder)) {
@@ -67,7 +74,19 @@ export const POST = withApiRoute(
 
       const timestampValue = Number(paramsToSign.timestamp);
       const nowSec = Math.floor(Date.now() / 1000);
-      const TIMESTAMP_TOLERANCE_SEC = 60 * 60;
+      if (!Number.isFinite(timestampValue)) {
+        return NextResponse.json(
+          { error: "Timestamp inválido" },
+          { status: 400 },
+        );
+      }
+
+      if (Math.abs(nowSec - timestampValue) > TIMESTAMP_TOLERANCE_SEC) {
+        return NextResponse.json(
+          { error: "Timestamp fuera de rango" },
+          { status: 400 },
+        );
+      }
 
       const signature = cloudinary.utils.api_sign_request(
         paramsToSign,

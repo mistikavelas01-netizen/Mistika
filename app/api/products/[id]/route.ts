@@ -14,10 +14,7 @@ export const GET = withApiRoute(
       const priceFilter = searchParams.get("priceFilter");
       const categoryId = searchParams.get("categoryId");
 
-      let products = await productsRepo.getAll();
-
-      // solo productos activos
-      products = products.filter((p) => p.isActive);
+      let products = await productsRepo.where("isActive", "==", true);
 
       // filtro categoría
       if (categoryId && categoryId !== "all") {
