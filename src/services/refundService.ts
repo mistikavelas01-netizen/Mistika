@@ -140,6 +140,15 @@ export async function refundOrderPayment(
     );
   }
 
+  if (order.status === "delivered") {
+    throw new HttpError(
+      "No se pueden crear reembolsos para pedidos entregados",
+      409,
+      "ORDER_ALREADY_DELIVERED",
+      true,
+    );
+  }
+
   const paymentId = order.mpPaymentId?.trim();
   if (!paymentId) {
     throw new HttpError(
