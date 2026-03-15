@@ -31,6 +31,10 @@ import {
   useRefundOrderPaymentMutation,
 } from "@/store/features/orders/ordersApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
+import {
+  getShippingEstimateLabel,
+  getShippingMethodLabel,
+} from "@/lib/shipping";
 import toast from "react-hot-toast";
 
 const statusConfig: Record<
@@ -511,20 +515,10 @@ export function OrderDetailAdminView() {
                   </p>
                   <div className="mt-3 rounded-lg bg-black/5 px-3 py-2 text-sm">
                     <span className="font-medium">
-                      {order.shippingMethod === "standard"
-                        ? "Estándar"
-                        : order.shippingMethod === "express"
-                          ? "Express"
-                          : "Overnight"}
+                      {getShippingMethodLabel(order.shippingMethod)}
                     </span>
                     <span className="text-black/50">
-                      {" "}
-                      ·{" "}
-                      {order.shippingMethod === "standard"
-                        ? "5-7 días"
-                        : order.shippingMethod === "express"
-                          ? "2-3 días"
-                          : "24 hrs"}
+                      {" "}· {getShippingEstimateLabel(order.shippingMethod, order.shippingCost)}
                     </span>
                   </div>
                 </div>

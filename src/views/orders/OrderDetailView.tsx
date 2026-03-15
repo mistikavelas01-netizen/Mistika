@@ -16,6 +16,10 @@ import {
 import { useFetchOrderByNumberQuery } from "@/store/features/orders/ordersApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 import { getProductImageUrl } from "@/constant";
+import {
+  getShippingEstimateLabel,
+  getShippingMethodLabel,
+} from "@/lib/shipping";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -425,19 +429,11 @@ export function OrderDetailView() {
 
               <div className="space-y-2 text-sm">
                 <p className="font-semibold uppercase tracking-[0.1em]">
-                  {order.shippingMethod === "standard"
-                    ? "Estándar"
-                    : order.shippingMethod === "express"
-                      ? "Express"
-                      : "No especificado"}
+                  {getShippingMethodLabel(order.shippingMethod)}
                 </p>
 
                 <p className="text-black/60">
-                  {order.shippingMethod === "standard"
-                    ? "5-7 días hábiles"
-                    : order.shippingMethod === "express"
-                      ? "2-3 días hábiles"
-                      : "—"}
+                  {getShippingEstimateLabel(order.shippingMethod, order.shippingCost)}
                 </p>
               </div>
             </div>
