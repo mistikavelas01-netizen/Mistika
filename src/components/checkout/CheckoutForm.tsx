@@ -15,6 +15,15 @@ import {
 } from "lucide-react";
 import { useCreateCheckoutDraftMutation, useCreateMercadoPagoPreferenceMutation } from "@/store/features/orders/ordersApi";
 import { useCart } from "@/context/cart-context";
+import {
+  EXPRESS_SHIPPING_METHOD,
+  OUTSIDE_XALAPA_SHIPPING_COST,
+  XALAPA_SHIPPING_COST,
+  getShippingCostForPostalCode,
+  getShippingZoneLabelForPostalCode,
+  isCompletePostalCode,
+  normalizePostalCode,
+} from "@/lib/shipping";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
@@ -23,21 +32,6 @@ type Props = {
   totalPrice: number;
   onClose: () => void;
 };
-
-const shippingOptions = [
-  {
-    value: "standard",
-    label: "Estándar",
-    days: "5-7 días hábiles",
-    cost: 80,
-  },
-  {
-    value: "express",
-    label: "Express",
-    days: "2-3 días hábiles",
-    cost: 120,
-  },
-] as const;
 
 const MERCADO_PAGO_ALLOWED_HOSTS = [
   "mercadopago.com",
@@ -75,7 +69,6 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
     shippingCity: "",
     shippingState: "",
     shippingZip: "",
-    shippingMethod: "standard" as "standard" | "express",
     notes: "",
   });
 
@@ -85,13 +78,25 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
     >,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "shippingZip" ? normalizePostalCode(value) : value,
+    }));
   };
 
+  const hasCompleteShippingZip = isCompletePostalCode(formData.shippingZip);
   const shippingCost = FREE_SHIPPING_ENABLED
     ? 0
-    : shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
-  const totalAmount = totalPrice + shippingCost;
+    : getShippingCostForPostalCode(formData.shippingZip);
+  const summaryShippingCost = FREE_SHIPPING_ENABLED
+    ? 0
+    : hasCompleteShippingZip
+      ? shippingCost
+      : XALAPA_SHIPPING_COST;
+  const shippingZoneLabel = hasCompleteShippingZip
+    ? getShippingZoneLabelForPostalCode(formData.shippingZip)
+    : null;
+  const totalAmount = totalPrice + summaryShippingCost;
   const isBelowMinimum = totalAmount < MIN_PURCHASE_AMOUNT;
   const navigateToCartFallback = () => {
     onClose();
@@ -118,7 +123,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
       const normalizedShippingStreet = formData.shippingStreet.trim();
       const normalizedShippingCity = formData.shippingCity.trim();
       const normalizedShippingState = formData.shippingState.trim();
-      const normalizedShippingZip = formData.shippingZip.trim();
+      const normalizedShippingZip = normalizePostalCode(formData.shippingZip);
       const normalizedNotes = formData.notes.trim();
 
       const orderData: OrderInput = {
@@ -132,7 +137,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
           zip: normalizedShippingZip,
           country: "México",
         },
-        shippingMethod: formData.shippingMethod,
+        shippingMethod: EXPRESS_SHIPPING_METHOD,
         paymentMethod: "card",
         notes: normalizedNotes || undefined,
         items: cart.map((item) => ({
@@ -343,9 +348,21 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
               value={formData.shippingZip}
               onChange={handleChange}
               required
+              inputMode="numeric"
+              pattern="[0-9]{5}"
+              maxLength={5}
               placeholder="00000"
               className="w-full rounded-lg border border-black/10 px-4 py-2.5 text-sm transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
             />
+            <p className="mt-1.5 text-xs text-black/50">
+              Validamos el código postal contra el catálogo local de Xalapa. Si
+              el CP no aparece, se cobra como externo.
+            </p>
+            {!FREE_SHIPPING_ENABLED && hasCompleteShippingZip ? (
+              <p className="mt-1.5 text-xs font-medium text-black/70">
+                Zona detectada: {shippingZoneLabel} · ${shippingCost.toFixed(2)}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -357,35 +374,33 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
           <span className="text-sm font-semibold">Método de envío</span>
         </div>
         <div className="p-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {shippingOptions.map((option) => (
-              <label
-                key={option.value}
-                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition ${
-                  formData.shippingMethod === option.value
-                    ? "border-black bg-black/5"
-                    : "border-black/10 hover:bg-black/5"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="shippingMethod"
-                    value={option.value}
-                    checked={formData.shippingMethod === option.value}
-                    onChange={handleChange}
-                    className="h-4 w-4 accent-black"
-                  />
-                  <div>
-                    <p className="text-sm font-medium">{option.label}</p>
-                    <p className="text-xs text-black/50">{option.days}</p>
-                  </div>
-                </div>
-                <span className="text-sm font-semibold">
-                  ${FREE_SHIPPING_ENABLED ? 0 : option.cost}
-                </span>
-              </label>
-            ))}
+          <div className="rounded-lg border border-black/10 bg-white px-4 py-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-black">
+                  Express
+                </p>
+                <p className="mt-1 text-sm text-black/70">
+                  Entrega de 1 a 3 días hábiles.
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-black">
+                {FREE_SHIPPING_ENABLED
+                  ? "$0.00"
+                  : hasCompleteShippingZip
+                    ? `$${shippingCost.toFixed(2)}`
+                    : `$${XALAPA_SHIPPING_COST.toFixed(2)} - $${OUTSIDE_XALAPA_SHIPPING_COST.toFixed(2)}`}
+              </span>
+            </div>
+            <p className="mt-3 text-xs text-black/60">
+              El costo se define por código postal: CP de Xalapa $40.00 y CP
+              externo $70.00.
+            </p>
+            {!FREE_SHIPPING_ENABLED && hasCompleteShippingZip ? (
+              <p className="mt-2 text-xs font-medium text-black/75">
+                Aplicando tarifa de {shippingZoneLabel}.
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -418,13 +433,31 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
             </div>
             <div className="flex justify-between">
               <span className="text-black/60">Envío</span>
-              <span className="font-medium">${shippingCost.toFixed(2)}</span>
+              <span className="font-medium">
+                {FREE_SHIPPING_ENABLED
+                  ? "$0.00"
+                  : hasCompleteShippingZip
+                    ? `$${shippingCost.toFixed(2)}`
+                    : `$${XALAPA_SHIPPING_COST.toFixed(2)} - $${OUTSIDE_XALAPA_SHIPPING_COST.toFixed(2)}`}
+              </span>
             </div>
+            {!FREE_SHIPPING_ENABLED && !hasCompleteShippingZip ? (
+              <p className="text-xs text-black/50">
+                Captura un código postal válido para confirmar si aplica tarifa
+                de Xalapa o externa.
+              </p>
+            ) : null}
             <p className="text-xs align-center text-black/50">Nuestros productos ya incluyen el IVA.</p>
             <div className="border-t border-black/10 pt-2">
               <div className="flex items-center justify-between">
-                <span className="font-semibold">Total a pagar</span>
-                <span className="text-xl font-bold">${totalAmount.toFixed(2)} MXN</span>
+                <span className="font-semibold">
+                  {FREE_SHIPPING_ENABLED || hasCompleteShippingZip
+                    ? "Total a pagar"
+                    : "Total desde"}
+                </span>
+                <span className="text-xl font-bold">
+                  ${totalAmount.toFixed(2)} MXN
+                </span>
               </div>
             </div>
             {isBelowMinimum ? (

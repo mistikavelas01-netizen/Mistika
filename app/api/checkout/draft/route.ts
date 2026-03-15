@@ -5,6 +5,12 @@ import {
 } from "../../_utils/repos";
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
+import {
+  EXPRESS_SHIPPING_METHOD,
+  getShippingCostForPostalCode,
+  isCompletePostalCode,
+  normalizePostalCode,
+} from "@/lib/shipping";
 
 const MIN_PURCHASE_AMOUNT = 5;
 
@@ -57,7 +63,9 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
     const shippingStreet = typeof body.shippingAddress?.street === "string" ? body.shippingAddress.street.trim() : "";
     const shippingCity = typeof body.shippingAddress?.city === "string" ? body.shippingAddress.city.trim() : "";
     const shippingState = typeof body.shippingAddress?.state === "string" ? body.shippingAddress.state.trim() : "";
-    const shippingZip = typeof body.shippingAddress?.zip === "string" ? body.shippingAddress.zip.trim() : "";
+    const shippingZip = typeof body.shippingAddress?.zip === "string"
+      ? normalizePostalCode(body.shippingAddress.zip)
+      : "";
     const shippingCountry = typeof body.shippingAddress?.country === "string"
       ? body.shippingAddress.country.trim() || "México"
       : "México";
@@ -65,6 +73,12 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
     if (!shippingStreet || !shippingCity || !shippingState || !shippingZip) {
       return NextResponse.json(
         { success: false, error: "La dirección de envío está incompleta" },
+        { status: 400 }
+      );
+    }
+    if (!isCompletePostalCode(shippingZip)) {
+      return NextResponse.json(
+        { success: false, error: "El código postal debe tener 5 dígitos" },
         { status: 400 }
       );
     }
@@ -171,9 +185,10 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
       );
     }
 
-    const shippingMethod = typeof body.shippingMethod === "string" ? body.shippingMethod.trim() : "standard";
-    const shippingCosts: Record<string, number> = { standard: 80, express: 120, overnight: 500 };
-    const shippingCost = isFreeShippingEnabled() ? 0 : shippingCosts[shippingMethod] ?? 150;
+    const shippingMethod = EXPRESS_SHIPPING_METHOD;
+    const shippingCost = isFreeShippingEnabled()
+      ? 0
+      : getShippingCostForPostalCode(shippingZip);
     const tax = 0;
 
     const orderItemsForCreate = normalizedItems.map((item) => {
