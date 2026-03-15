@@ -7,6 +7,12 @@ import {
 } from "../_utils/repos";
 import { sendMail } from "@/mail/sendMail";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import {
+  EXPRESS_SHIPPING_METHOD,
+  getShippingCostForPostalCode,
+  isCompletePostalCode,
+  normalizePostalCode,
+} from "@/lib/shipping";
 import { logger } from "../_utils/logger";
 import { withApiRoute } from "../_utils/with-api-route";
 
@@ -117,6 +123,37 @@ export const POST = withApiRoute(
       if (!customerPhone) {
         return NextResponse.json(
           { success: false, error: "El teléfono del cliente es obligatorio" },
+          { status: 400 },
+        );
+      }
+
+      const shippingStreet =
+        typeof body.shippingAddress?.street === "string"
+          ? body.shippingAddress.street.trim()
+          : "";
+      const shippingCity =
+        typeof body.shippingAddress?.city === "string"
+          ? body.shippingAddress.city.trim()
+          : "";
+      const shippingState =
+        typeof body.shippingAddress?.state === "string"
+          ? body.shippingAddress.state.trim()
+          : "";
+      const shippingZip =
+        typeof body.shippingAddress?.zip === "string"
+          ? normalizePostalCode(body.shippingAddress.zip)
+          : "";
+
+      if (!shippingStreet || !shippingCity || !shippingState || !shippingZip) {
+        return NextResponse.json(
+          { success: false, error: "La dirección de envío está incompleta" },
+          { status: 400 },
+        );
+      }
+
+      if (!isCompletePostalCode(shippingZip)) {
+        return NextResponse.json(
+          { success: false, error: "El código postal debe tener 5 dígitos" },
           { status: 400 },
         );
       }
@@ -264,13 +301,7 @@ export const POST = withApiRoute(
         );
       }
 
-      const shippingCosts: Record<string, number> = {
-        standard: 80.0,
-        express: 120.0,
-        overnight: 500.0,
-      };
-      const shippingCost =
-        shippingCosts[body.shippingMethod || "standard"] ?? 150.0;
+      const shippingCost = getShippingCostForPostalCode(shippingZip);
       const tax = 0;
 
       const now = new Date();
@@ -313,17 +344,17 @@ export const POST = withApiRoute(
         customerName: body.customerName,
         customerEmail: body.customerEmail,
         customerPhone,
-        shippingStreet: body.shippingAddress.street,
-        shippingCity: body.shippingAddress.city,
-        shippingState: body.shippingAddress.state,
-        shippingZip: body.shippingAddress.zip,
+        shippingStreet,
+        shippingCity,
+        shippingState,
+        shippingZip,
         shippingCountry: body.shippingAddress.country ?? "México",
         billingStreet: body.billingAddress?.street ?? null,
         billingCity: body.billingAddress?.city ?? null,
         billingState: body.billingAddress?.state ?? null,
         billingZip: body.billingAddress?.zip ?? null,
         billingCountry: body.billingAddress?.country ?? null,
-        shippingMethod: body.shippingMethod ?? "standard",
+        shippingMethod: EXPRESS_SHIPPING_METHOD,
         paymentMethod: body.paymentMethod ?? null,
         paymentStatus: "pending",
         refundStatus: "none" as const,

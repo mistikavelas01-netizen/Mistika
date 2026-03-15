@@ -19,6 +19,10 @@ import toast from "react-hot-toast";
 import { useCart } from "@/context/cart-context";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { getProductImageUrl } from "@/constant";
+import {
+  OUTSIDE_XALAPA_SHIPPING_COST,
+  XALAPA_SHIPPING_COST,
+} from "@/lib/shipping";
 
 const CHECKOUT_RETURN_TOAST_KEY = "checkout_return_toast";
 const FREE_SHIPPING_ENABLED = process.env.NEXT_PUBLIC_FREE_SHIPPING_ENABLED === "true";
@@ -57,9 +61,9 @@ export function CartPage() {
     setShowClearModal(false);
   };
 
-  const shippingCost = FREE_SHIPPING_ENABLED ? 0 : 80;
-  const finalTotal = totalPrice + shippingCost;
-  const isBelowMinimum = finalTotal < MIN_PURCHASE_AMOUNT;
+  const estimatedShippingCost = FREE_SHIPPING_ENABLED ? 0 : XALAPA_SHIPPING_COST;
+  const estimatedTotal = totalPrice + estimatedShippingCost;
+  const isBelowMinimum = estimatedTotal < MIN_PURCHASE_AMOUNT;
   const handleOpenCheckout = () => {
     if (isBelowMinimum) {
       toast.error(`La compra mínima es de $${MIN_PURCHASE_AMOUNT} MXN.`);
@@ -284,18 +288,32 @@ export function CartPage() {
                       <span className="font-medium">${totalPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-black/60">Envío</span>
-                      <span className="font-medium">${shippingCost.toFixed(2)}</span>
+                      <span className="text-black/60">Envío express</span>
+                      <span className="font-medium">
+                        {FREE_SHIPPING_ENABLED ? "$0.00" : "Se calcula en checkout"}
+                      </span>
                     </div>
+                    {!FREE_SHIPPING_ENABLED ? (
+                      <p className="text-xs text-black/50">
+                        Se valida por código postal: Xalapa $40.00 y fuera de
+                        Xalapa $70.00.
+                      </p>
+                    ) : null}
                     <p className="text-xs text-black/50">Nuestros productos ya incluyen el IVA.</p>
                   </div>
 
                   <div className="mt-4 border-t border-black/10 pt-4">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold">Total</span>
-                      <span className="text-2xl font-bold">${finalTotal.toFixed(2)}</span>
+                      <span className="font-semibold">
+                        {FREE_SHIPPING_ENABLED ? "Total" : "Total desde"}
+                      </span>
+                      <span className="text-2xl font-bold">${estimatedTotal.toFixed(2)}</span>
                     </div>
-                    <p className="mt-1 text-xs text-black/50">MXN, impuestos incluidos</p>
+                    <p className="mt-1 text-xs text-black/50">
+                      {FREE_SHIPPING_ENABLED
+                        ? "MXN, impuestos incluidos"
+                        : `MXN con envío dentro de Xalapa. Fuera de Xalapa se agregan $${(OUTSIDE_XALAPA_SHIPPING_COST - XALAPA_SHIPPING_COST).toFixed(2)}.`}
+                    </p>
                     {isBelowMinimum ? (
                       <p className="mt-2 text-xs font-medium text-red-600">
                         La compra mínima es de ${MIN_PURCHASE_AMOUNT} MXN.
