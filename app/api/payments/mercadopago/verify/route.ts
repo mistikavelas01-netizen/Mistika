@@ -52,8 +52,15 @@ export const GET = withApiRoute({ route: "/api/payments/mercadopago/verify" }, a
           { name: "mercadopago", operation: "payment.get" },
           () => getMercadoPagoPayment(effectivePaymentId)
         );
-      } catch (err) {
-        logger.error("mp.verify_fetch_failed", { error: err });
+      } catch (err: any) {
+        logger.error("mp.verify_fetch_failed", {
+          errorMessage: err?.message,
+          paymentId: effectivePaymentId,
+          mpStatus: err?.status ?? err?.response?.status,
+          mpError: err?.error,
+          mpCause: err?.cause,
+          mpResponseData: err?.response?.data,
+        });
         return NextResponse.json({
           success: false,
           error: "No se pudo verificar el pago con Mercado Pago",
