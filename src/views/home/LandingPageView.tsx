@@ -266,11 +266,10 @@ export function LandingPageView() {
 
             <div className="mb-8 mt-auto">
               <h1 className="mb-3 text-4xl font-semibold tracking-[0.08em] text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
-                Bienvenido a tu ritual diario
+                Bienvenido a la casa del aroma
               </h1>
               <p className="mb-4 max-w-2xl text-base text-white/90 drop-shadow-md sm:text-lg">
-                Velas artesanales para transformar tu espacio en calma, aroma y
-                presencia. Elige tu esencia y siente el cambio desde hoy.
+                Creamos experiencias aromáticas que elevan tu espacio y energía
               </p>
 
               <div className="flex flex-wrap items-center gap-4">
