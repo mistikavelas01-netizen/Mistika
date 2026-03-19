@@ -7,6 +7,7 @@ import {
 } from "../_utils/repos";
 import { sendMail } from "@/mail/sendMail";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { clearSalesAnalyticsCache } from "@/modules/sales-analytics/cache";
 import {
   EXPRESS_SHIPPING_METHOD,
   getShippingCostForPostalCode,
@@ -426,6 +427,8 @@ export const POST = withApiRoute(
       } catch (emailError) {
         logger.error("orders.confirmation_email_failed", { error: emailError });
       }
+
+      clearSalesAnalyticsCache();
 
       return NextResponse.json({
         success: true,

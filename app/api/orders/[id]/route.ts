@@ -5,6 +5,7 @@ import {
 import { requireAdminAuth } from "@/lib/auth/api-helper";
 import { sendMail } from "@/mail/sendMail";
 import type { OrderStatusPayload } from "@/mail/types";
+import { clearSalesAnalyticsCache } from "@/modules/sales-analytics/cache";
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 import { enrichOrderWithItemsAndCategory } from "../_utils/enrich-order";
@@ -137,6 +138,8 @@ export const PUT = withApiRoute(
           });
         }
       }
+
+      clearSalesAnalyticsCache();
 
       return NextResponse.json({ success: true, data });
     } catch (error) {

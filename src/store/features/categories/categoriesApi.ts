@@ -54,7 +54,7 @@ export const categoriesApi = apiSlice.injectEndpoints({
         }
         return response;
       },
-      invalidatesTags: ["Categories"],
+      invalidatesTags: ["Categories", "Analytics"],
     }),
 
     // Update category (mutation)
@@ -73,6 +73,7 @@ export const categoriesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         { type: "Categories", id },
         "Categories",
+        "Analytics",
       ],
     }),
 
@@ -88,7 +89,7 @@ export const categoriesApi = apiSlice.injectEndpoints({
         }
         return response;
       },
-      invalidatesTags: ["Categories"],
+      invalidatesTags: ["Categories", "Analytics"],
     }),
   }),
 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { categoriesRepo, toApiEntityList, toApiEntity } from "../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { clearSalesAnalyticsCache } from "@/modules/sales-analytics/cache";
 import { logger } from "../_utils/logger";
 import { withApiRoute } from "../_utils/with-api-route";
 
@@ -56,6 +57,8 @@ export const POST = withApiRoute({ route: "/api/categories" }, async (request: N
       description: body.description ?? null,
       isActive: body.isActive !== undefined ? body.isActive : true,
     });
+
+    clearSalesAnalyticsCache();
 
     return NextResponse.json({
       success: true,
