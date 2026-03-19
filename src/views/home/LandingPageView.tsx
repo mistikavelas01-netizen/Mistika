@@ -170,7 +170,10 @@ export function LandingPageView() {
     categoryId,
   } as ProductsQueryParams);
 
-  const products = productsData?.data ?? [];
+  const allProducts = productsData?.data ?? [];
+  const products = allProducts.filter(
+    (p: Product) => p.stock > 0
+  );
   const pagination = productsData?.pagination;
   const productsSectionRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -266,11 +269,10 @@ export function LandingPageView() {
 
             <div className="mb-8 mt-auto">
               <h1 className="mb-3 text-4xl font-semibold tracking-[0.08em] text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
-                Bienvenido a tu ritual diario
+                Bienvenido a la casa del aroma
               </h1>
               <p className="mb-4 max-w-2xl text-base text-white/90 drop-shadow-md sm:text-lg">
-                Velas artesanales para transformar tu espacio en calma, aroma y
-                presencia. Elige tu esencia y siente el cambio desde hoy.
+                Creamos experiencias aromáticas que elevan tu espacio y energía
               </p>
 
               <div className="flex flex-wrap items-center gap-4">
