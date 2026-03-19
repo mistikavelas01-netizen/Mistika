@@ -170,7 +170,10 @@ export function LandingPageView() {
     categoryId,
   } as ProductsQueryParams);
 
-  const products = productsData?.data ?? [];
+  const allProducts = productsData?.data ?? [];
+  const products = allProducts.filter(
+    (p: Product) => p.stock > 0
+  );
   const pagination = productsData?.pagination;
   const productsSectionRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
