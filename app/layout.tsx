@@ -6,6 +6,7 @@ import { Providers } from "./(webapp)/Providers";
 import { getSiteUrl } from "@/lib/app-url";
 
 const siteUrl = getSiteUrl();
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -82,12 +83,32 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const year = new Date().getFullYear();
+
   return (
     <html lang="es" className="light" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
-      >
-        <Providers>{children}</Providers>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
+        <Providers>
+          {children}
+          <footer className="border-t border-black/10 bg-black/5">
+            <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-4 text-center text-xs text-black/60 sm:flex-row sm:text-left">
+              <p className="text-[11px] sm:text-xs">
+                © {year} Mistika. Todos los derechos reservados.
+              </p>
+              {CONTACT_EMAIL ? (
+                <p className="text-[11px] sm:text-xs">
+                  Contacto:{" "}
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="font-medium text-black/75 underline underline-offset-2 hover:text-black"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                </p>
+              ) : null}
+            </div>
+          </footer>
+        </Providers>
       </body>
     </html>
   );
