@@ -36,7 +36,9 @@ function buildRevenueQuery(
   return `/admin/analytics/revenue${baseSearch}${baseSearch ? "&" : "?"}dimension=${dimension}`;
 }
 
-function unwrapItemResponse<T>(response: ApiItemResponse<T>): { data: T } {
+function unwrapItemResponse<T extends object>(
+  response: ApiItemResponse<T>,
+): { data: T } {
   if ("success" in response && response.success && response.data) {
     return { data: response.data };
   }
