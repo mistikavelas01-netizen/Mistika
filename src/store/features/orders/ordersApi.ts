@@ -135,7 +135,7 @@ export const ordersApi = apiSlice.injectEndpoints({
         }
         return response;
       },
-      invalidatesTags: ["Orders"],
+      invalidatesTags: ["Orders", "Analytics"],
     }),
 
     // Update order (mutation)
@@ -154,6 +154,7 @@ export const ordersApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         { type: "Orders", id },
         "Orders",
+        "Analytics",
       ],
     }),
 
@@ -192,6 +193,7 @@ export const ordersApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         { type: "Orders", id },
         "Orders",
+        "Analytics",
       ],
     }),
 

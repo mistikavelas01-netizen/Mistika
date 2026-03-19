@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { categoriesRepo, toApiEntity } from "../../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { clearSalesAnalyticsCache } from "@/modules/sales-analytics/cache";
 import { logger } from "../../_utils/logger";
 import { withApiRoute } from "../../_utils/with-api-route";
 
@@ -78,6 +79,8 @@ export const PUT = withApiRoute(
     await categoriesRepo.update(id, updateData);
     const updated = await categoriesRepo.getById(id);
 
+    clearSalesAnalyticsCache();
+
     return NextResponse.json({
       success: true,
       data: toApiEntity(updated),
@@ -109,6 +112,8 @@ export const DELETE = withApiRoute(
     }
 
     await categoriesRepo.update(id, { isActive: false });
+
+    clearSalesAnalyticsCache();
 
     return NextResponse.json({
       success: true,

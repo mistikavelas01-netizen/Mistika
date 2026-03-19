@@ -100,6 +100,6 @@ const baseQuery = fetchBaseQuery({
 
 export const apiSlice = createApi({
   baseQuery,
-  tagTypes: ["Products", "Orders", "Categories", "Cart", "Webhooks", "Carousel"],
+  tagTypes: ["Products", "Orders", "Categories", "Cart", "Webhooks", "Carousel", "Analytics"],
   endpoints: () => ({}), // Empty initially - endpoints injected later
 });
