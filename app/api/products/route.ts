@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { productsRepo, categoriesRepo, toApiEntity } from "../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
 import { PLACEHOLDER_IMAGE } from "@/constant";
+import { clearSalesAnalyticsCache } from "@/modules/sales-analytics/cache";
 import { logger } from "../_utils/logger";
 import { withApiRoute } from "../_utils/with-api-route";
 
@@ -112,6 +113,8 @@ export const POST = withApiRoute({ route: "/api/products" }, async (request: Nex
     });
 
     const category = await categoriesRepo.getById(categoryId);
+
+    clearSalesAnalyticsCache();
 
     return NextResponse.json({
       success: true,

@@ -498,30 +498,34 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
       </div>
 
       {/* Submit */}
-      <div className="flex gap-3">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row">
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 rounded-xl border border-black/10 py-3.5 font-medium text-black/70 transition hover:bg-black/5"
+          className="min-h-[48px] flex-1 rounded-xl border border-black/10 py-3.5 font-medium text-black/70 transition hover:bg-black/5 sm:min-h-0"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0"
         >
           {isLoadingOrRedirecting ? (
             <>
-              <Loader2 size={18} className="animate-spin" />
-              {isRedirecting ? "Redirigiendo…" : "Procesando…"}
+              <Loader2 size={20} className="shrink-0 animate-spin" />
+              <span className="text-sm sm:text-base">
+                {isRedirecting ? "Redirigiendo…" : "Procesando…"}
+              </span>
             </>
           ) : isBelowMinimum ? (
-            <>Compra mínima $5 MXN</>
+            <span className="text-sm sm:text-base">Compra mínima $5 MXN</span>
           ) : (
             <>
-              Pagar con Mercado Pago
-              <ExternalLink size={16} />
+              <span className="text-sm text-white/90 sm:text-base">
+                Pagar con Mercado Pago
+              </span>
+              <ExternalLink size={18} className="shrink-0" />
             </>
           )}
         </button>

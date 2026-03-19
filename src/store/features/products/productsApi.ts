@@ -88,7 +88,7 @@ export const productsApi = apiSlice.injectEndpoints({
         }
         return response;
       },
-      invalidatesTags: ["Products"],
+      invalidatesTags: ["Products", "Analytics"],
     }),
 
     // Update product (mutation)
@@ -107,6 +107,7 @@ export const productsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         { type: "Products", id },
         "Products",
+        "Analytics",
       ],
     }),
 
@@ -122,7 +123,7 @@ export const productsApi = apiSlice.injectEndpoints({
         }
         return response;
       },
-      invalidatesTags: ["Products"],
+      invalidatesTags: ["Products", "Analytics"],
     }),
   }),
 });

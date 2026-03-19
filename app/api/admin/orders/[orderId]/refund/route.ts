@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import type { RefundType } from "@/firebase/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
+import { clearSalesAnalyticsCache } from "@/modules/sales-analytics/cache";
 import { refundOrderPayment } from "@/services/refundService";
 import { HttpError } from "../../../../_utils/errors";
 import { withApiRoute } from "../../../../_utils/with-api-route";
@@ -60,6 +61,8 @@ export const POST = withApiRoute(
       adminUsername: auth.payload.username,
       idempotencyKey,
     });
+
+    clearSalesAnalyticsCache();
 
     return NextResponse.json({
       success: true,
