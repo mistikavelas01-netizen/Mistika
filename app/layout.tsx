@@ -98,15 +98,22 @@ export default function RootLayout({
         <Providers>
           {children}
           <footer className="border-t border-black/10 bg-black/5">
-            <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-4 text-center text-xs text-black/60 sm:flex-row sm:text-left">
-              <p className="text-[11px] sm:text-xs">
-                © {year} Mistika. Todos los derechos reservados.
-              </p>
-              <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/70 sm:text-xs">
-                  Contactos
-                </span>
-                <div className="flex flex-wrap items-center justify-center gap-2.5">
+            <div className="mx-auto max-w-6xl px-4 py-5 text-xs text-black/60">
+              <div className="flex flex-col items-center justify-between gap-5 sm:flex-row sm:items-start">
+                <div className="flex flex-col items-center gap-1 text-center sm:items-start sm:text-left">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/70 sm:text-xs">
+                    Horario
+                  </span>
+                  <p className="text-[11px] text-black/70 sm:text-xs">
+                    Lunes a domingo de 9am a 7pm
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center gap-2 text-center sm:items-end sm:text-right">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/70 sm:text-xs">
+                    Redes sociales
+                  </span>
+                  <div className="flex flex-wrap items-center justify-center gap-2.5 sm:justify-end">
                   <a
                     href={INSTAGRAM_URL}
                     target="_blank"
@@ -136,8 +143,13 @@ export default function RootLayout({
                       <BiLogoGmail size={18} />
                     </a>
                   ) : null}
+                  </div>
                 </div>
               </div>
+
+              <p className="mt-4 border-t border-black/10 pt-4 text-center text-[11px] sm:text-xs">
+                © {year} Mistika. Todos los derechos reservados.
+              </p>
             </div>
           </footer>
         </Providers>
