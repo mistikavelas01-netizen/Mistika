@@ -1,6 +1,8 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminToken } from "@/lib/auth/server";
+import { getFirebaseAdminAuth } from "@/lib/firebase-admin";
+
+const SESSION_COOKIE_NAME = "__session";
 
 export async function requireAdminAuth(
   request: NextRequest,
@@ -8,49 +10,23 @@ export async function requireAdminAuth(
   | { success: true; payload: AdminTokenPayload }
   | { success: false; response: NextResponse }
 > {
-  const authHeader = request.headers.get("authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value?.trim() ?? "";
+  if (!sessionCookie) {
     return {
       success: false,
       response: NextResponse.json(
-        { error: "No autorizado. Token requerido." },
-        { status: 401 },
-      ),
-    };
-  }
-
-  const token = authHeader.substring(7).trim();
-
-  if (!token) {
-    return {
-      success: false,
-      response: NextResponse.json(
-        { error: "No autorizado. Token requerido." },
+        { error: "No autorizado. Sesión requerida." },
         { status: 401 },
       ),
     };
   }
 
   try {
-    const payload = verifyAdminToken(token);
-
-    if (typeof payload === "object" && payload !== null && "role" in payload) {
-      if (payload.role !== "admin") {
-        return {
-          success: false,
-          response: NextResponse.json(
-            { error: "No autorizado. Se requieren permisos de administrador." },
-            { status: 403 },
-          ),
-        };
-      }
-    }
-
+    const payload = await getFirebaseAdminAuth().verifySessionCookie(sessionCookie, true);
     return { success: true, payload };
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "Token inválido o expirado.";
+      error instanceof Error ? error.message : "Sesión inválida o expirada.";
     return {
       success: false,
       response: NextResponse.json({ error: errorMessage }, { status: 401 }),
@@ -59,23 +35,18 @@ export async function requireAdminAuth(
 }
 
 /**
- * Verifica si la request trae un Bearer token de administrador válido.
- * Se usa para habilitar bypass de token público en rutas donde admin ya está autenticado.
+ * Verifica si la request trae una sesión de administrador válida por cookie.
+ * Se usa para habilitar bypass en rutas que permiten modo público/admin.
  */
-export function isAdminRequest(request: NextRequest): boolean {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return false;
-  }
-
-  const token = authHeader.substring(7).trim();
-  if (!token) {
+export async function isAdminRequest(request: NextRequest): Promise<boolean> {
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value?.trim() ?? "";
+  if (!sessionCookie) {
     return false;
   }
 
   try {
-    const payload = verifyAdminToken(token);
-    return payload.role === "admin";
+    await getFirebaseAdminAuth().verifySessionCookie(sessionCookie, true);
+    return true;
   } catch {
     return false;
   }

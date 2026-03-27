@@ -13,7 +13,7 @@ export const GET = withApiRoute(
   async (request: NextRequest, { params }: { params: Promise<{ orderNumber: string }> }) => {
   try {
     const { orderNumber } = await params;
-    const adminAccess = isAdminRequest(request);
+    const adminAccess = await isAdminRequest(request);
     const token = request.nextUrl.searchParams.get("token");
     const expires = request.nextUrl.searchParams.get("expires");
     if (!adminAccess && (!token || !expires)) {
