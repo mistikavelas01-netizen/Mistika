@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_TOKEN_KEY, verifyAdminTokenEdge } from "@/lib/auth";
+import { getFirebaseAdminAuth } from "@/lib/firebase-admin";
 
 const ADMIN_SUBDOMAIN = "admin";
 
@@ -53,10 +53,11 @@ function isSafeAdminPath(path: string | null): path is string {
  * - Rutas de API: valida autenticación para rutas admin.
  * Edge Runtime: usa auth/edge.ts (compatible con Edge).
  */
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   const { pathname } = request.nextUrl;
   const method = request.method;
+  const firebaseAdminAuth = getFirebaseAdminAuth();
 
   // ——— Rutas de página: subdominio admin y redirección ———
   if (!pathname.startsWith("/api/")) {
@@ -80,9 +81,12 @@ export function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const cookieToken = request.cookies.get(ADMIN_TOKEN_KEY)?.value?.trim() ?? "";
+    const cookieToken = request.cookies.get("__session")?.value?.trim() ?? "";
     const auth = cookieToken
-      ? verifyAdminTokenEdge(cookieToken)
+      ? await firebaseAdminAuth
+          .verifySessionCookie(cookieToken, true)
+          .then(() => ({ valid: true as const }))
+          .catch(() => ({ valid: false as const }))
       : { valid: false as const };
     const redirectToLogin = (nextPath: string) => {
       const url = request.nextUrl.clone();
@@ -137,13 +141,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ——— Rutas de API: validación de token admin ———
-
-  // Rutas que no requieren Bearer token (MP webhook, login, etc.)
+  // ——— Rutas de API: validación por sesión Firebase (__session) ———
   const publicRoutes = [
-    "/api/auth/login",
-    "/api/auth/logout",
-    "/api/auth/verify",
+    "/api/auth/session",
     "/api/webhooks", // POST desde Mercado Pago (URL puede ser /api/webhooks o /api/webhooks/mercadopago)
     "/api/webhooks/mercadopago",
   ];
@@ -179,26 +179,31 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  // Las rutas API protegidas solo se permiten desde el subdominio admin
+  // y con sesión Firebase válida.
+  if (!isAdminSubdomain(host)) {
     return NextResponse.json(
-      { error: "No autorizado. Token requerido." },
+      { error: "No autorizado. Usa el subdominio admin." },
+      { status: 403 }
+    );
+  }
+
+  const sessionCookie = request.cookies.get("__session")?.value?.trim() ?? "";
+  if (!sessionCookie) {
+    return NextResponse.json(
+      { error: "No autorizado. Sesión requerida." },
       { status: 401 }
     );
   }
 
-  const token = authHeader.substring(7).trim();
-  if (!token) {
-    return NextResponse.json(
-      { error: "No autorizado. Token requerido." },
-      { status: 401 }
-    );
-  }
+  const hasValidSession = await firebaseAdminAuth
+    .verifySessionCookie(sessionCookie, true)
+    .then(() => true)
+    .catch(() => false);
 
-  const verification = verifyAdminTokenEdge(token);
-  if (!verification.valid) {
+  if (!hasValidSession) {
     return NextResponse.json(
-      { error: verification.error || "Token inválido o expirado." },
+      { error: "No autorizado. Sesión inválida o expirada." },
       { status: 401 }
     );
   }

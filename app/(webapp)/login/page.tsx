@@ -1,18 +1,15 @@
-import { Suspense } from "react";
-import AutenticacionView from "@/views/admin/AutenticacionView";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
+import { getAppZoneFromHostname } from "@/lib/subdomain";
 
-function LoginFallback() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="h-10 w-10 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
-    </main>
-  );
-}
+export default async function LoginPage() {
+  const requestHeaders = await headers();
+  const zone = getAppZoneFromHostname(requestHeaders.get("host"));
 
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<LoginFallback />}>
-      <AutenticacionView />
-    </Suspense>
-  );
+  if (zone !== "admin") {
+    redirect("/");
+  }
+
+  return <AdminLoginForm />;
 }

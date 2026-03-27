@@ -48,7 +48,7 @@ async function enrichOrderWithItems(
   };
 }
 
-export const GET = withApiRoute(
+const getHandler = withApiRoute(
   { route: "/api/orders" },
   async (request: NextRequest) => {
     const auth = await requireAdminAuth(request);
@@ -99,7 +99,7 @@ export const GET = withApiRoute(
   },
 );
 
-export const POST = withApiRoute(
+const postHandler = withApiRoute(
   { route: "/api/orders" },
   async (request: NextRequest) => {
     const auth = await requireAdminAuth(request);
@@ -443,3 +443,11 @@ export const POST = withApiRoute(
     }
   },
 );
+
+export async function GET(request: NextRequest) {
+  return getHandler(request, undefined as never);
+}
+
+export async function POST(request: NextRequest) {
+  return postHandler(request, undefined as never);
+}

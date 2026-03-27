@@ -4,11 +4,27 @@ import type { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 import { StoreProvider } from "./StoreProvider";
 import { CartProvider } from "@/context/cart-context";
+import { AuthProvider } from "@/context/AuthContext";
+import type { AppZone } from "@/lib/subdomain";
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  zone,
+}: {
+  children: ReactNode;
+  zone: AppZone;
+}) {
+  const withAuth = zone === "admin";
+
   return (
     <StoreProvider>
-      <CartProvider>{children}</CartProvider>
+      {withAuth ? (
+        <AuthProvider>
+          <CartProvider>{children}</CartProvider>
+        </AuthProvider>
+      ) : (
+        <CartProvider>{children}</CartProvider>
+      )}
       <Toaster
         position="top-right"
         toastOptions={{

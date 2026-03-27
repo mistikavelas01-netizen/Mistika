@@ -14,7 +14,7 @@ export const GET = withApiRoute(
   ) => {
     try {
       const { id } = await params;
-      const adminAccess = isAdminRequest(request);
+      const adminAccess = await isAdminRequest(request);
       const product = await productsRepo.getById(id);
 
       if (!product || (!adminAccess && !product.isActive)) {
