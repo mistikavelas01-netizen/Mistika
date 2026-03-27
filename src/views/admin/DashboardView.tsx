@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Package,
-  ShoppingBag,
   Plus,
   TrendingUp,
   Tag,
@@ -24,7 +23,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
 import { useFetchOrdersQuery } from "@/store/features/orders/ordersApi";
-import { clearStoredToken } from "@/lib/auth/client";
+import { useAuth } from "@/context/AuthContext";
 import { ServerError } from "@/components/ui/ServerError";
 import toast from "react-hot-toast";
 import { getStoreUrlFromBrowser } from "@/lib/site-url-client";
@@ -62,8 +61,39 @@ function useStoreUrl(): string {
   return useMemo(() => getStoreUrlFromBrowser(), []);
 }
 
+function DashboardLoadingView() {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-3 w-44 animate-pulse rounded bg-black/10" />
+            <div className="h-10 w-64 animate-pulse rounded bg-black/10" />
+          </div>
+          <div className="h-10 w-40 animate-pulse rounded-xl bg-black/10" />
+        </div>
+
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="rounded-2xl border border-black/10 bg-white p-5">
+              <div className="h-8 w-16 animate-pulse rounded bg-black/10" />
+              <div className="mt-3 h-4 w-24 animate-pulse rounded bg-black/10" />
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-2xl border border-black/10 bg-white p-10 text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-black/20 border-t-black/70" />
+          <p className="text-sm text-black/60">Cargando dashboard...</p>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export function DashboardView() {
   const router = useRouter();
+  const { signOut } = useAuth();
   const storeUrl = useStoreUrl();
   const { data: productsData, isLoading: isLoadingProducts, isError: isErrorProducts, refetch: refetchProducts } = useFetchProductsQuery(
     { page: 1, limit: 100 },
@@ -100,14 +130,13 @@ export function DashboardView() {
   const ordersNeedingAttention = pendingOrders + processingOrders;
 
   const handleLogout = async () => {
-    clearStoredToken();
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await signOut();
+      toast.success("Sesión cerrada");
+      router.replace("/login");
     } catch {
-      // Si falla el request, continuamos limpiando sesión local.
+      toast.error("No se pudo cerrar sesión. Intenta de nuevo.");
     }
-    toast.success("Sesión cerrada");
-    router.replace("/login");
   };
 
   const formatDate = (date: string | Date | number) => {
@@ -136,6 +165,10 @@ export function DashboardView() {
         />
       </main>
     );
+  }
+
+  if (isLoadingOrders || isLoadingProducts) {
+    return <DashboardLoadingView />;
   }
 
   return (
