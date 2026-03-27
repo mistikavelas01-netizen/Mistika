@@ -40,7 +40,7 @@ export function AdminLoginForm() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/dashboard");
+      router.replace("/admin");
     }
   }, [loading, router, user]);
 
@@ -51,7 +51,7 @@ export function AdminLoginForm() {
 
     try {
       await signIn(email.trim(), password);
-      router.replace("/dashboard");
+      router.replace("/admin");
     } catch (nextError) {
       setError(mapFirebaseError(nextError));
     } finally {
@@ -60,10 +60,19 @@ export function AdminLoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold">Admin login</h1>
-        <p className="mt-1 text-sm text-black/60">Accede con tu correo y contraseña.</p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-neutral-50 via-white to-neutral-100 px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.08),_transparent_45%)]" />
+
+      <div className="relative w-full max-w-md rounded-3xl border border-black/10 bg-white/90 p-7 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur">
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-black/45">
+            Mistika Admin
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Iniciar sesión</h1>
+          <p className="mt-1 text-sm text-black/60">
+            Accede con tu correo y contraseña para entrar al panel.
+          </p>
+        </div>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block">
@@ -74,7 +83,8 @@ export function AdminLoginForm() {
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
-              className="w-full rounded-lg border border-black/20 px-3 py-2 outline-none ring-black/20 transition focus:ring-2"
+              placeholder="tu-correo@dominio.com"
+              className="w-full rounded-xl border border-black/15 bg-white px-3 py-2.5 outline-none ring-black/20 transition placeholder:text-black/35 focus:border-black/30 focus:ring-2"
             />
           </label>
 
@@ -86,16 +96,21 @@ export function AdminLoginForm() {
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
               required
-              className="w-full rounded-lg border border-black/20 px-3 py-2 outline-none ring-black/20 transition focus:ring-2"
+              placeholder="Tu contraseña"
+              className="w-full rounded-xl border border-black/15 bg-white px-3 py-2.5 outline-none ring-black/20 transition placeholder:text-black/35 focus:border-black/30 focus:ring-2"
             />
           </label>
 
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
 
           <button
             type="submit"
             disabled={disabled}
-            className="w-full rounded-lg bg-black px-4 py-2 text-white transition enabled:hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 w-full rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white transition enabled:hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Entrando..." : "Iniciar sesión"}
           </button>
