@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { BiLogoGmail } from "react-icons/bi";
 import { FaSquareInstagram, FaWhatsapp } from "react-icons/fa6";
 import "@/style/globals.css";
 import { getSiteUrl } from "@/lib/app-url";
+import { getAppZoneFromHostname } from "@/lib/subdomain";
 import { Providers } from "./(webapp)/Providers";
 
 const siteUrl = getSiteUrl();
@@ -83,11 +85,13 @@ export const viewport = {
   colorScheme: "light",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const zone = getAppZoneFromHostname(requestHeaders.get("host"));
   const year = new Date().getFullYear();
 
   return (
@@ -95,7 +99,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        <Providers>
+        <Providers zone={zone}>
           {children}
           <footer className="border-t border-black/10 bg-black/5">
             <div className="mx-auto max-w-6xl px-4 py-5 text-xs text-black/60">

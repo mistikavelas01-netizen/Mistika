@@ -6,7 +6,7 @@ import { clearSalesAnalyticsCache } from "@/modules/sales-analytics/cache";
 import { logger } from "../_utils/logger";
 import { withApiRoute } from "../_utils/with-api-route";
 
-export const GET = withApiRoute({ route: "/api/products" }, async (request: NextRequest) => {
+const getHandler = withApiRoute({ route: "/api/products" }, async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -71,7 +71,7 @@ export const GET = withApiRoute({ route: "/api/products" }, async (request: Next
   }
 });
 
-export const POST = withApiRoute({ route: "/api/products" }, async (request: NextRequest) => {
+const postHandler = withApiRoute({ route: "/api/products" }, async (request: NextRequest) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -131,3 +131,11 @@ export const POST = withApiRoute({ route: "/api/products" }, async (request: Nex
     );
   }
 });
+
+export async function GET(request: NextRequest) {
+  return getHandler(request, undefined as never);
+}
+
+export async function POST(request: NextRequest) {
+  return postHandler(request, undefined as never);
+}
